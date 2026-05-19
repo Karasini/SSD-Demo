@@ -1,0 +1,28 @@
+---
+description: All docs in simple English (B2); standard IT terms; readable for non-native developers
+alwaysApply: true
+---
+
+# Language: simple English (B2)
+
+- **Default language**: Write all documentation in **English** — feature docs, user stories, specs, task descriptions, acceptance criteria, and notes.
+- **Reading level**: Use **simple B2 English**. Many readers are not native speakers. Prefer clarity over style.
+- **Sentences**: Short and direct. One main idea per sentence. Active voice when possible.
+- **Words**: Common, everyday words. Avoid rare synonyms, idioms, slang, and long formal phrases.
+- **Avoid**: Nested clauses, passive chains, buzzwords (“leverage”, “syne- **IT terms**: Keep standard industry English (*endpoint*, *payload*, *commit*, *pull request*, *branch*, *deployment*, *rollback*, *cache*, *webhook*, *timeout*, *middleware*). Do not translate them into awkward equivalents.
+rgy”), jokes, and culture-specific references.
+- **Names and identifiers**: Product names, JSON fields, URLs, CLI commands, and code identifiers stay as in the source. Explain them in plain English in the surrounding text.
+- **Consistency**: Pick one term and reuse it (e.g. always “user”, not “customer” and “user” in the same doc unless the product distinguishes them).
+- **Explain once**: When a term may be new, add a short plain-English explanation the first time. Do not repeat the same definition on every line.
+
+```markdown
+❌ Avoid: "Upon successful completion of the asynchronous persistence operation, the client shall be notified via the notification subsystem."
+
+✅ Better: "When the save finishes, the app shows a success message."
+```
+
+```markdown
+❌ Avoid: "Rollback the deployment on the feature branch" buried in a long, complex sentence.
+
+✅ Better: "Roll back the **deployment** on the **feature branch**." (Short sentence. Standard IT terms.)
+```

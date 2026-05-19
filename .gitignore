@@ -1,0 +1,132 @@
+# Spec-driven development monorepo
+# knowledge-base/.cursor/ is tracked on purpose (skills, rules).
+
+# --- OS ---
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# --- Secrets & local config ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+credentials.json
+**/appsettings.*.local.json
+**/appsettings.local.json
+
+# --- Editors (do not ignore knowledge-base/.cursor/) ---
+.idea/
+*.swp
+*.swo
+*~
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+
+# --- Logs & temp ---
+*.log
+logs/
+tmp/
+temp/
+.cache/
+
+# --- .NET (apps/api-dotnet, etc.) ---
+[Bb]in/
+[Oo]bj/
+[Oo]ut/
+[Bb]uild/
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+artifacts/
+*.nupkg
+*.snupkg
+.nuget/
+packages/
+_ReSharper*/
+*.rsuser
+TestResults/
+coverage/
+*.coverage
+*.coveragexml
+*.DotSettings.user
+
+# --- Node / React (apps/web, etc.) ---
+node_modules/
+dist/
+build/
+.next/
+.nuxt/
+.parcel-cache/
+.turbo/
+*.tsbuildinfo
+.npm
+.eslintcache
+.stylelintcache
+storybook-static/
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+
+# --- Python (apps/transcriptor-worker, etc.) ---
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+venv/
+.venv/
+env/
+ENV/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+.coverage.*
+*.egg
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+share/python-wheels/
+
+# --- ML / WhisperX (large model weights & caches) ---
+*.pt
+*.pth
+*.onnx
+models/
+.cache/huggingface/
+.huggingface/
+
+# --- Docker / infrastructure (local overrides) ---
+docker-compose.override.yml
+docker-compose.*.local.yml
+*.local.yaml
+*.local.yml
+
+# --- Runtime storage (uploads, local DB, dev data) ---
+uploads/
+storage/
+data/
+*.db
+*.sqlite
+*.sqlite3
+
+# --- Optional tooling outputs ---
+.understand/

@@ -1,0 +1,41 @@
+---
+description: Standards for generating feature use case documents
+globs: **/usecases.md
+alwaysApply: false
+---
+
+# Use Case Documents
+
+- Write `usecases.md` in **simple English (B2)** — see `.cursor/rules/english-simple-b2-documents.mdc`.
+- Describe concrete ways a user works with the feature.
+- Focus on user context, user goal, and what the system must support.
+- Keep the document clear, practical, and easy to scan.
+
+- Use this structure for every use case:
+  - `## Use Case N: [Short, concrete title]`
+  - `**Actor:** ...`
+  - `**Trigger:** ...`
+  - `**What needs to be supported:**`
+
+- In `Actor`:
+  - use a concrete role, e.g. business owner, dispatcher, office worker,
+  - use system or integration actors only when they are truly relevant.
+
+- In `Trigger`:
+  - describe briefly when and why this use case starts,
+  - focus on the user need that initiates the flow.
+
+- In `What needs to be supported`:
+  - write bullet points,
+  - start points with verbs,
+  - make every point testable,
+  - describe what the user must be able to do, not how it is implemented.
+
+- Avoid:
+  - technical details,
+  - UI descriptions pixel by pixel,
+  - long narrative paragraphs,
+  - `Example Scenarios` sections.
+
+- Good outcome:
+  - all use cases together clearly show the main ways the feature is used.

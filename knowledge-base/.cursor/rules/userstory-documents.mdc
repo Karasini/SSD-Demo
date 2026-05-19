@@ -1,0 +1,65 @@
+---
+description: Standards for user story files in Responia-Knowledge
+globs: **/*userstory*.md
+alwaysApply: false
+---
+
+# User Story Documents (Responia-Knowledge)
+
+This rule applies to all `*userstory*.md` files and complements `instructions/userstory.instructions.md`. Use the instructions file for detailed examples; use this rule as the main checklist for Responia-Knowledge.
+
+## Language and purpose
+
+- **Language:** Write all content and headings in **simple English (B2)** — see `.cursor/rules/english-simple-b2-documents.mdc` (including Goal, Acceptance Criteria, Notes, and the full As a / I want / So that block).
+- **One file = one user story** — if you need more stories, create separate files.
+- Each user story must be clear for a **non-technical** reader (product, business, stakeholders).
+
+## File naming
+
+- Use descriptive names ending with `-userstory.md`, e.g.:
+  - `desktop-calendar-task-overview-userstory.md`
+  - `calendar-config-admin-userstory.md`
+- Avoid generic names like `story1-userstory.md`, `user-userstory.md`.
+
+## Document structure
+
+Every user story file **must** follow this structure:
+
+```markdown
+## [Feature name]
+
+**As a** [specific role/persona]  
+**I want** [what this role wants to do]  
+**So that** [business outcome / benefit]
+
+**Goal:** [one sentence, clear for a non-technical reader]
+
+**Acceptance criteria:**
+- **Given** [starting context / precondition]  
+  **When** [action]  
+  **Then** [expected result]
+- more criteria in the same pattern
+
+**Notes:** (optional)
+- [business context, related stories, out of scope]
+```
+
+## Quality rules
+
+- **User perspective:** write from a specific role (e.g. "Transport company owner", "Mail handler"), not a generic "User".
+- **No implementation:** do not describe APIs, endpoints, data structures, or architecture — that belongs in technical docs, not user stories.
+- **Acceptance criteria (Given/When/Then):**
+  - must be **testable**, **specific**, and **observable**,
+  - cover the happy path,
+  - include realistic edge cases and errors (e.g. missing permissions, invalid data),
+  - each criterion should stand alone (you can test it separately).
+
+## Multiple user stories per feature
+
+If one feature needs several user stories:
+
+- create separate files for different personas or scenarios (e.g. admin vs end user),
+- use descriptive file names that show the perspective or aspect,
+- in **Notes**, you may link to related user stories (by file name).
+
+When creating or editing user stories, use this rule as a short checklist; see the instructions file when in doubt.

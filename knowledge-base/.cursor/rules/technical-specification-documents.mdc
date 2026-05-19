@@ -1,0 +1,82 @@
+---
+description: Standards for technical specification documents (implementation solution)
+globs: **/technical-specification.md
+alwaysApply: false
+---
+
+# Technical Specification Documents
+
+- Always write the document in **English**.
+- Optimize for **developers**, **solution architects**, and **QA**.
+- Describe **HOW** the feature will be implemented: components, endpoints, parameters, payloads, integrations.
+- Be **concrete and concise** – no marketing language, no fluff.
+
+## Patterns
+
+- Choose one pattern per document:
+  - **Pattern 1: Flow-Based Solution**
+    - Use for multi-step user/system flows and complex interactions.
+    - Structure:
+      1. Feature flow – step-by-step journey.
+      2. (Optional) Swimlane diagram for components/services.
+      3. Technical details per step: caller, endpoint, method, parameters, request/response payloads, key implementation notes.
+  - **Pattern 2: Solution Analysis & Selection**
+    - Use when comparing multiple approaches.
+    - Structure:
+      1. Options 1..N – for each: short description, 2–3 pros, 2–3 cons.
+      2. Recommendation – chosen option + 1–2 sentence rationale.
+      3. Implementation – concrete details for the chosen option.
+  - **Pattern 3: Single Solution**
+    - Use for straightforward features without variant analysis.
+    - Structure:
+      1. Solution – what we will do (1–2 sentences).
+      2. Why – short rationale (1–2 sentences).
+      3. Implementation – components, endpoints, parameters, payloads, configuration.
+      4. Integration points – who calls what, with which data.
+
+## Content Rules
+
+- **Focus on integration points**:
+  - Clearly document which component calls what (service, API, SDK, queue, etc.).
+  - For each interaction: HTTP method, URL, parameters, request/response format.
+- **Allowed examples**:
+  - JSON payloads.
+  - HTTP endpoints with parameters and response shapes.
+  - Data model/contract structures (represent them as JSON).
+- **JSON formatting requirement**:
+  - When showing endpoint parameters, request/response shapes, data model/contracts, always use a fenced block with ` ```json ` and represent the content as valid JSON objects/arrays.
+- **Do NOT include example code** (C#, Python, TypeScript, SQL, pseudocode, etc.) **unless the user explicitly asks for code examples in this document.**
+- Do **not** include:
+  - Problem description (`overview.md` is the source of truth).
+  - User stories (`userstory.md` is the source of truth).
+  - Time estimates, timelines, or roadmaps.
+  - Database schemas, unless they are critical to understand the approach.
+  - Marketing language (e.g. "comprehensive", "robust", "scalable").
+
+## Architecture & Design Principles (Constraints for the proposed solution)
+- **Clean Architecture & dependency direction**
+  - The proposed architecture must align with dependency direction: orchestration/use-case belongs to the feature, integration capabilities belong to infrastructure.
+- **CQRS**
+  - Separate write behavior from read behavior in the described design.
+  - For read paths, document that side-effects are avoided; if side-effects are unavoidable, explicitly justify them.
+- **DDD boundaries**
+  - The domain concepts used by the solution should be mapped to contracts (DTOs/events/payloads) without leaking integration concerns into domain logic.
+- **SOLID**
+  - Each described major component must have a clear responsibility and collaboration points; avoid combining unrelated responsibilities into one “god” unit.
+- **Design hygiene (DRY / KISS / YAGNI)**
+  - Prefer the simplest design that satisfies the required integration points and security constraints.
+  - When multiple options exist, call out what is intentionally reusable vs what is kept one-off (YAGNI).
+- **Robustness & error handling (in spec terms)**
+  - Document key failure modes that impact callers (validation/auth, upstream failures, partial failures).
+  - For each critical integration point, state the expected caller-visible behavior on failure (what can be relied upon).
+
+## Style
+
+- Prefer bullet points over long paragraphs.
+- Keep rationale to **1–2 sentences** per decision.
+- State concrete facts:
+  - Endpoints, methods, parameters, payloads.
+  - How tokens/IDs are generated and validated.
+  - Access restrictions and security-related decisions.
+- Avoid generic statements about "effective communication between components" without specifics.
+

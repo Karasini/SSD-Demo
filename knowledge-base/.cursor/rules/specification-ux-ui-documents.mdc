@@ -1,0 +1,74 @@
+---
+description: Standards for generating UX/UI specification documents
+globs: **/specification-ux-ui.md
+alwaysApply: false
+---
+# UX/UI Specification Documents
+
+- Write in **simple English (B2)** — see `.cursor/rules/english-simple-b2-documents.mdc`.
+- Audience: developers, architects, QA, UX designers, and product owners.
+- Figma (or equivalent design source) is the visual source of truth; the spec describes **behavior, states, limits, and edge cases**, not implementation.
+- Style: concise, decision-focused, easy to scan — **prefer lists and subsections**, not tables.
+- Content must **support good product UX**, not only describe layout from design files.
+
+## Application UX (content priority)
+
+- Every rule should answer: what the user sees, understands, and can do at that moment.
+- Keep **consistency** with the rest of the app (same patterns for cards, filters, empty states, message priority).
+- Reduce **cognitive load**: do not multiply signals; avoid conflicting states (e.g. list vs detail panel); clearly show “in progress” vs “done” vs “error”.
+- **User paths** from `usecases.md` must flow through the spec without gaps — especially first use, empty lists, errors, and recovery after errors.
+- Empty states, copy, and CTAs should **guide the next step**, not only say there is no data.
+- When a UX decision is unclear — add it under `Open questions for UX/UI` instead of guessing in implementation.
+
+## Structure (section order, `##` headings)
+
+1. `Source materials`
+2. `Base layout`
+3. `Views / screen variants`
+4. `Components, cards, and visual variants`
+5. `Filters, search, and view controls`
+6. `Additional panels / modals / drawers / details`
+7. `UI states not visible in design` (+ optional `Open questions for UX/UI`)
+
+Use `---` between main sections. Subsections: `###` (screen, component, panel).
+
+## When to use a table vs a list
+
+| Use a table | Use lists / subsections |
+| --- | --- |
+| `Source materials` (Material \| Purpose \| Link) | Base layout — short bullets with **bold role** per area |
+| Variant comparison (e.g. `Variant \| When \| Rule`) | Rules for one screen or component |
+| UI state matrix (`State \| When \| Placement \| Behavior`) | Filters and search — subsections + bullets; table only for many orthogonal decisions |
+| Empty state with final copy | Panel behavior, transitions, design embeds |
+
+Do not turn whole sections into one big “Area \| Rule” table — that is hard to read. Prefer scannable subsections per screen or feature area.
+
+## Content patterns (match mature specs)
+
+**Layout / screen** — bullet list, e.g.:
+- **Top status area** — role and when it appears.
+- **Item list** — main behavior.
+
+**Component / rule** — under `###` with labels:
+- **When:** …
+- **How:** …
+- **After completion:** … (if relevant)
+
+**Visual variants** — table only when there are ≥2 variants with different presentation rules; otherwise bullets below.
+
+**Filters** — `###` per area (panel, status, date, search); inside use a list or a short decision table.
+
+At the end of a subsection: `Design reference:` + link(s); embed **locally** next to the described element (header, card, panel), not one full-screen embed at the top of the document.
+
+## Design files and materials
+
+- No design link → check existing `specification-ux-ui.md` / context; if still missing — ask the user.
+- In `Source materials`, include `overview.md`, `usecases.md`, design system, and local assets.
+
+## Must describe
+
+loading, empty, error, overflow (e.g. “x more”), filters, detail panel, ambiguous interactions.
+
+## Avoid
+
+implementation details, copying the design file verbatim in prose, obvious visual facts without behavioral decisions, wall-of-tables where a list is enough.

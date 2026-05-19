@@ -1,0 +1,41 @@
+---
+description: Standards for generating feature overview documents
+globs: **/overview.md
+alwaysApply: false
+---
+# Overview Documents
+
+- Write `overview.md` in **simple English (B2)** — see `.cursor/rules/english-simple-b2-documents.mdc`.
+- Optimize for non-technical readers: keep it short, clear, and easy to scan.
+- Focus on two things only: the current problem and the intended goal.
+- Explain user pain and business context, not technical implementation.
+
+- Use this structure:
+  1. `Problem`
+  2. `Goals`
+
+- In `Problem`:
+  - describe the concrete pain the user or company has today,
+  - focus on what is difficult or missing now,
+  - use 2-4 bullets when helpful.
+
+- In `Goals`:
+  - start with one short paragraph describing the main goal,
+  - then list specific goals as bullets,
+  - explain what becomes easier, faster, or more visible for the user.
+
+- Writing rules:
+  - use simple, short sentences,
+  - write in the user's language, not the system's language,
+  - keep the document high-level,
+  - usually stay within 150-300 words.
+
+- Avoid:
+  - technical jargon,
+  - architecture or implementation details,
+  - detailed UI descriptions,
+  - marketing-style language.
+
+- Good pattern:
+  - `Problem`: what hurts today
+  - `Goals`: what should become clearly better
