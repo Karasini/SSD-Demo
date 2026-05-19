@@ -1,0 +1,101 @@
+.portal {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #f4f6f8;
+  color: #1a1a1a;
+}
+
+.portal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  background: #fff;
+  border-bottom: 1px solid #dde3ea;
+}
+
+.portal__header h1 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.portal__body {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  min-height: 0;
+}
+
+.portal__list {
+  background: #fff;
+  border-right: 1px solid #dde3ea;
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.portal__list h2 {
+  margin: 0 0 0.75rem;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #5a6570;
+}
+
+.portal__list-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.portal__workspace {
+  padding: 1.5rem;
+  overflow-y: auto;
+}
+
+.portal__welcome h2 {
+  margin-top: 0;
+}
+
+.muted {
+  color: #5a6570;
+  font-size: 0.9rem;
+}
+
+button {
+  cursor: pointer;
+  border: 1px solid #c5ced8;
+  background: #fff;
+  border-radius: 6px;
+  padding: 0.45rem 0.85rem;
+}
+
+button.primary {
+  background: #2563eb;
+  color: #fff;
+  border-color: #2563eb;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.status-badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.status-queued { background: #e8edf5; color: #3b4a5a; }
+.status-inprogress { background: #dbeafe; color: #1d4ed8; }
+.status-completed { background: #dcfce7; color: #166534; }
+.status-failed { background: #fee2e2; color: #991b1b; }
+
+@media (max-width: 900px) {
+  .portal__body {
+    grid-template-columns: 1fr;
+  }
+}

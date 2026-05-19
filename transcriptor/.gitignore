@@ -1,0 +1,21 @@
+# .NET
+**/bin/
+**/obj/
+**/.vs/
+
+# Node
+node_modules/
+dist/
+.env
+.env.local
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# IDE / OS
+.idea/
+.DS_Store
+*.user

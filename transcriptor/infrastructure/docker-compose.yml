@@ -1,0 +1,87 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: transcriptor
+      POSTGRES_PASSWORD: transcriptor
+      POSTGRES_DB: transcriptor
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U transcriptor"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ../apps/api-dotnet
+      dockerfile: Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__Default: Host=postgres;Port=5432;Database=transcriptor;Username=transcriptor;Password=transcriptor
+      Storage__Minio__Endpoint: minio:9000
+      Storage__Minio__AccessKey: minioadmin
+      Storage__Minio__SecretKey: minioadmin
+      Storage__Minio__Bucket: transcription
+      Storage__Minio__UseSsl: "false"
+      Worker__BaseUrl: http://worker:8000
+      InternalApi__ApiKey: dev-internal-key
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_started
+
+  worker:
+    build:
+      context: ../apps/transcriptor-worker
+      dockerfile: Dockerfile
+      args:
+        INSTALL_WHISPERX: "true"
+    environment:
+      API_BASE_URL: http://api:8080
+      INTERNAL_API_KEY: dev-internal-key
+      MOCK_MODE: "false"
+      MOCK_DELAY_SECONDS: "3"
+      WHISPER_MODEL: medium
+      WHISPER_DEVICE: cpu
+      WHISPER_COMPUTE_TYPE: int8
+    depends_on:
+      - api
+
+  web:
+    build:
+      context: ../apps/web
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: http://localhost:8080
+    ports:
+      - "5173:80"
+    depends_on:
+      - api
+
+volumes:
+  postgres_data:
+  minio_data:
