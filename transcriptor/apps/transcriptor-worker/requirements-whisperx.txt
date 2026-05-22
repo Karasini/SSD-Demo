@@ -1,5 +1,0 @@
-# Optional: install for real WhisperX transcription (GPU recommended)
-# pip install -r requirements-whisperx.txt
-whisperx
-torch
-torchaudio

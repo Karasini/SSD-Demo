@@ -4,6 +4,8 @@ import tempfile
 from pathlib import Path
 
 from app.config import settings
+from app.whisper_model import get as get_whisper_model
+from app.whisper_model import get_align
 
 logger = logging.getLogger(__name__)
 
@@ -34,14 +36,6 @@ def _build_transcript_from_segments(segments: list[dict]) -> str:
 
 def transcribe_file(media_path: Path, file_name: str) -> tuple[str, str | None]:
     """Returns (transcript_text, detected_language)."""
-    if settings.mock_mode:
-        return (
-            f"[Mock transcript for {file_name}]\n\n"
-            "This is a development mock transcript. "
-            "Set MOCK_MODE=false and install WhisperX for real transcription.",
-            "en",
-        )
-
     try:
         import whisperx  # type: ignore
     except ImportError as exc:
@@ -59,20 +53,14 @@ def transcribe_file(media_path: Path, file_name: str) -> tuple[str, str | None]:
             work_path = wav_path
 
         audio = whisperx.load_audio(str(work_path))
-        model = whisperx.load_model(
-            settings.whisper_model,
-            settings.whisper_device,
-            compute_type=settings.whisper_compute_type,
-        )
+        model = get_whisper_model()
         result = model.transcribe(audio, batch_size=settings.whisper_batch_size)
         language = result.get("language")
 
         segments = result.get("segments", [])
         if language and segments:
             try:
-                align_model, metadata = whisperx.load_align_model(
-                    language_code=language, device=settings.whisper_device
-                )
+                align_model, metadata = get_align(language)
                 aligned = whisperx.align(
                     segments,
                     align_model,

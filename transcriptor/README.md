@@ -9,7 +9,7 @@ transcriptor/
   apps/
     api-dotnet/          # .NET 8 API (PostgreSQL, MinIO, job orchestration)
     web/                 # React + TypeScript portal
-    transcriptor-worker/ # FastAPI worker (WhisperX; mock mode by default)
+    transcriptor-worker/ # FastAPI worker (WhisperX)
   infrastructure/        # docker-compose for local stack
   docs/
 ```
@@ -30,7 +30,7 @@ docker compose up --build
 | API Swagger | http://localhost:8080/swagger |
 | MinIO console | http://localhost:9001 (minioadmin / minioadmin) |
 
-Upload an audio or video file in the portal. With default `MOCK_MODE=true`, the worker returns a mock transcript after ~3 seconds.
+Upload an audio or video file in the portal. The worker transcribes with WhisperX (first startup downloads the model; CPU is slow but fine for local testing).
 
 ## Local development (without Docker)
 
@@ -58,7 +58,8 @@ Uses `appsettings.Development.json` (Postgres on localhost:5432, MinIO on localh
 cd apps/transcriptor-worker
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-export MOCK_MODE=true API_BASE_URL=http://localhost:8080 INTERNAL_API_KEY=dev-internal-key
+export API_BASE_URL=http://localhost:8080 INTERNAL_API_KEY=dev-internal-key
+export WHISPER_MODEL=base WHISPER_DEVICE=cpu WHISPER_COMPUTE_TYPE=int8
 uvicorn app.main:app --reload --port 8000
 ```
 
@@ -73,19 +74,26 @@ npm run dev
 
 Open http://localhost:5173 (Vite dev server). Set `VITE_API_BASE_URL=http://localhost:8080` in `.env`.
 
-## Real WhisperX transcription
+## Worker (WhisperX)
 
-Default **local dev** uses mock mode (no GPU, no model download). The Docker stack in `infrastructure/docker-compose.yml` builds the worker with WhisperX when `INSTALL_WHISPERX=true` (already set there) and runs with `MOCK_MODE=false`.
+The worker warms up at startup (not on the first job): ASR + alignment for `WHISPER_WARMUP_LANGUAGES`.
 
-To enable WhisperX locally (without Docker):
+**Startup time (CPU, `medium`):** ~2 minutes is normal. Rough breakdown:
+- ~1 min — load ASR + pyannote VAD into RAM (no HTTP yet; looks like a “pause” in logs)
+- ~10–40 s — alignment weights per language (parallel for `en,pl` when both are warmed up)
 
-1. Install worker extras: `pip install -r requirements-whisperx.txt`
-2. Set environment variables:
-   - `MOCK_MODE=false`
-   - `WHISPER_MODEL=base` (or `large-v2` for production)
-   - `WHISPER_DEVICE=cuda` or `cpu`
-   - `WHISPER_COMPUTE_TYPE=float16` or `int8` (CPU)
-3. Ensure `ffmpeg` is on `PATH`.
+The Docker image **pre-downloads** weights at `docker compose build` (slow build once) so `docker compose up` restarts skip HTTP; loading into RAM on each container start still takes ~1 min on CPU. For faster local dev, use `WHISPER_MODEL=base`.
+
+| Variable | Default | Notes |
+| --- | --- | --- |
+| `WHISPER_MODEL` | `base` | Docker Compose uses `medium` |
+| `WHISPER_DEVICE` | `cpu` | `cuda` when GPU available |
+| `WHISPER_COMPUTE_TYPE` | `int8` | `float16` on GPU |
+| `WHISPER_WARMUP_LANGUAGES` | `en` | Comma-separated alignment languages to preload (e.g. `en,pl`) |
+
+Ensure `ffmpeg` is on `PATH` for video inputs.
+
+Harmless startup noise (suppressed when possible): pyannote probing **torchcodec** in CPU Docker — it looks for CUDA libs (`libnvrtc`) and prints FFmpeg version tracebacks, but WhisperX uses **ffmpeg** for audio, not torchcodec.
 
 After changing worker dependencies, rebuild the worker image:
 
@@ -94,12 +102,6 @@ cd infrastructure
 docker compose build --no-cache worker
 docker compose up -d worker
 ```
-
-The first transcription job downloads models inside the container; CPU mode is slow but works for local testing.
-
-To use mock mode in Docker instead, set `INSTALL_WHISPERX: "false"` under `worker.build.args` and `MOCK_MODE: "true"` in `worker.environment`.
-
-GPU images and CI are out of scope for v1; use mock mode in pipelines and test WhisperX on a GPU machine.
 
 ## API (v1)
 

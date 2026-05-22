@@ -1,6 +1,9 @@
+import app  # noqa: F401 — runs warnings_filter.configure() before ML imports
+
 import asyncio
 import logging
 import tempfile
+from contextlib import asynccontextmanager
 from pathlib import Path
 from uuid import UUID
 
@@ -11,6 +14,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from app.api_client import ApiClient
 from app.config import settings
 from app.transcription import map_failure_reason, transcribe_file
+from app.whisper_model import is_ready, wait_ready, warmup
 
 logging.basicConfig(level=logging.INFO)
 logging.getLogger("matplotlib").setLevel(logging.WARNING)
@@ -18,7 +22,16 @@ logging.getLogger("lightning").setLevel(logging.WARNING)
 logging.getLogger("lightning.pytorch").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="Transcriptor Worker")
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    logger.info("Warming up Whisper models at startup")
+    loop = asyncio.get_running_loop()
+    await loop.run_in_executor(None, warmup)
+    yield
+
+
+app = FastAPI(title="Transcriptor Worker", lifespan=lifespan)
 api_client = ApiClient()
 
 _active_jobs: set[str] = set()
@@ -55,9 +68,6 @@ async def _process_job(job_id: str, body: RunJobRequest) -> None:
 
         if _is_cancelled(job_id):
             return
-
-        if settings.mock_mode:
-            await asyncio.sleep(settings.mock_delay_seconds)
 
         with tempfile.TemporaryDirectory() as tmp:
             media_path = Path(tmp) / body.file_name
@@ -104,7 +114,16 @@ async def _process_job(job_id: str, body: RunJobRequest) -> None:
 
 @app.get("/health")
 async def health() -> dict[str, str]:
-    return {"status": "healthy", "mockMode": str(settings.mock_mode).lower()}
+    if not is_ready():
+        raise HTTPException(
+            status_code=503,
+            detail="Whisper model is still loading",
+            headers={"Retry-After": "30"},
+        )
+    return {
+        "status": "healthy",
+        "whisperModelReady": str(is_ready()).lower(),
+    }
 
 
 @app.post("/internal/v1/jobs/{job_id}/run", status_code=202)
@@ -125,6 +144,15 @@ async def run_job(
 
     if body.job_id != job_id:
         raise HTTPException(status_code=400, detail="Job id mismatch")
+
+    loop = asyncio.get_running_loop()
+    ready = await loop.run_in_executor(None, lambda: wait_ready(timeout=30.0))
+    if not ready:
+        raise HTTPException(
+            status_code=503,
+            detail="Whisper model is still loading",
+            headers={"Retry-After": "30"},
+        )
 
     _active_jobs.add(job_key)
     background_tasks.add_task(_process_job, job_key, body)

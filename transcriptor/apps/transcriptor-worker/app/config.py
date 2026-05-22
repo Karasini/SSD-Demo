@@ -10,9 +10,16 @@ class Settings(BaseSettings):
     whisper_device: str = "cpu"  # WHISPER_DEVICE
     whisper_compute_type: str = "int8"  # WHISPER_COMPUTE_TYPE
     whisper_batch_size: int = 8
+    whisper_warmup_languages: str = "en, pl"  # WHISPER_WARMUP_LANGUAGES (comma-separated)
     ffmpeg_path: str = "ffmpeg"
-    mock_mode: bool = True
-    mock_delay_seconds: float = 3.0
+
+    @property
+    def warmup_language_list(self) -> list[str]:
+        return [
+            code.strip()
+            for code in self.whisper_warmup_languages.split(",")
+            if code.strip()
+        ]
 
 
 settings = Settings()
