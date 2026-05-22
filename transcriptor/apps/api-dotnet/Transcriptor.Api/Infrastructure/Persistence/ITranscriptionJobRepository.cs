@@ -11,4 +11,6 @@ public interface ITranscriptionJobRepository
         int pageSize,
         CancellationToken cancellationToken = default);
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
+
+    Task RemoveAsync(TranscriptionJob job, CancellationToken cancellationToken = default);
 }

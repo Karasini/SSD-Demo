@@ -37,6 +37,8 @@ builder.Services.AddScoped<IListTranscriptionJobsHandler, ListTranscriptionJobsH
 builder.Services.AddScoped<IGetTranscriptionJobByIdHandler, GetTranscriptionJobByIdHandler>();
 builder.Services.AddScoped<IUpdateTranscriptionJobStatusHandler, UpdateTranscriptionJobStatusHandler>();
 builder.Services.AddScoped<ITriggerTranscriptionJobHandler, TriggerTranscriptionJobHandler>();
+builder.Services.AddScoped<IDeleteTranscriptionJobHandler, DeleteTranscriptionJobHandler>();
+builder.Services.AddScoped<IBulkDeleteTranscriptionJobsHandler, BulkDeleteTranscriptionJobsHandler>();
 
 builder.Services.AddCors(options =>
 {

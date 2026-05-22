@@ -14,6 +14,8 @@ public static class TranscriptionJobsEndpoints
 
         group.MapGet("/", ListJobs);
         group.MapGet("/{id:guid}", GetJobById);
+        group.MapDelete("/{id:guid}", DeleteJob);
+        group.MapPost("/bulk-delete", BulkDeleteJobs);
         group.MapPost("/", CreateJob)
             .DisableAntiforgery();
 
@@ -84,6 +86,52 @@ public static class TranscriptionJobsEndpoints
             return Results.ValidationProblem(new Dictionary<string, string[]>
             {
                 ["file"] = [ex.Message]
+            });
+        }
+    }
+
+    private static async Task<IResult> DeleteJob(
+        Guid id,
+        IDeleteTranscriptionJobHandler handler,
+        CancellationToken cancellationToken)
+    {
+        var deleted = await handler.HandleAsync(new DeleteTranscriptionJobCommand(id), cancellationToken);
+        if (!deleted)
+        {
+            return Results.Problem(
+                detail: "Transcription job was not found.",
+                statusCode: StatusCodes.Status404NotFound,
+                title: "Not Found");
+        }
+
+        return Results.NoContent();
+    }
+
+    private static async Task<IResult> BulkDeleteJobs(
+        BulkDeleteTranscriptionJobsRequestDto body,
+        IBulkDeleteTranscriptionJobsHandler handler,
+        CancellationToken cancellationToken)
+    {
+        if (body.Ids is null || body.Ids.Count == 0)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["ids"] = ["At least one job id is required."]
+            });
+        }
+
+        try
+        {
+            var result = await handler.HandleAsync(
+                new BulkDeleteTranscriptionJobsCommand(body.Ids),
+                cancellationToken);
+            return Results.Ok(result);
+        }
+        catch (ValidationException ex)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["ids"] = [ex.Message]
             });
         }
     }

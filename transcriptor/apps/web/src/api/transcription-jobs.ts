@@ -1,5 +1,6 @@
 import { apiClient } from './client'
 import type {
+  BulkDeleteTranscriptionJobsResponse,
   TranscriptionJobDetail,
   TranscriptionJobListResponse,
 } from './types'
@@ -46,4 +47,18 @@ export async function createTranscriptionJob(
 
 export function isActiveStatus(status: string): boolean {
   return status === 'Queued' || status === 'InProgress'
+}
+
+export async function deleteTranscriptionJob(id: string): Promise<void> {
+  await apiClient.delete(`/api/v1/transcription-jobs/${id}`)
+}
+
+export async function bulkDeleteTranscriptionJobs(
+  ids: string[],
+): Promise<BulkDeleteTranscriptionJobsResponse> {
+  const { data } = await apiClient.post<BulkDeleteTranscriptionJobsResponse>(
+    '/api/v1/transcription-jobs/bulk-delete',
+    { ids },
+  )
+  return data
 }

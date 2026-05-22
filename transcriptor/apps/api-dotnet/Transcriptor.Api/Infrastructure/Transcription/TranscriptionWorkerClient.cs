@@ -63,6 +63,29 @@ public class TranscriptionWorkerClient
         throw new InvalidOperationException("Worker unavailable");
     }
 
+    public async Task CancelJobAsync(Guid jobId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            using var message = new HttpRequestMessage(
+                HttpMethod.Post,
+                $"internal/v1/jobs/{jobId}/cancel");
+            message.Headers.Add("X-Internal-Api-Key", _apiKey);
+            var response = await _httpClient.SendAsync(message, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning(
+                    "Worker cancel for job {JobId} returned {StatusCode}",
+                    jobId,
+                    response.StatusCode);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Worker cancel for job {JobId} failed", jobId);
+        }
+    }
+
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase

@@ -4,9 +4,6 @@ import tempfile
 from pathlib import Path
 
 from app.config import settings
-from app.warnings_filter import configure as configure_warnings
-
-configure_warnings()
 
 logger = logging.getLogger(__name__)
 

@@ -31,3 +31,20 @@ public interface ITriggerTranscriptionJobHandler
 {
     Task HandleAsync(TriggerTranscriptionJobCommand command, CancellationToken cancellationToken = default);
 }
+
+public record DeleteTranscriptionJobCommand(Guid JobId);
+
+public interface IDeleteTranscriptionJobHandler
+{
+    /// <returns>True if deleted; false if job was not found.</returns>
+    Task<bool> HandleAsync(DeleteTranscriptionJobCommand command, CancellationToken cancellationToken = default);
+}
+
+public record BulkDeleteTranscriptionJobsCommand(IReadOnlyList<Guid> Ids);
+
+public interface IBulkDeleteTranscriptionJobsHandler
+{
+    Task<BulkDeleteTranscriptionJobsResponseDto> HandleAsync(
+        BulkDeleteTranscriptionJobsCommand command,
+        CancellationToken cancellationToken = default);
+}

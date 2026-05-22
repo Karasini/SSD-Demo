@@ -37,3 +37,11 @@ public record UpdateTranscriptionJobRequestDto(
     string? TranscriptText,
     string? DetectedLanguage,
     string? FailureReason);
+
+public record BulkDeleteTranscriptionJobsRequestDto(IReadOnlyList<Guid> Ids);
+
+public record BulkDeleteFailureItemDto(Guid Id, string Reason);
+
+public record BulkDeleteTranscriptionJobsResponseDto(
+    IReadOnlyList<Guid> DeletedIds,
+    IReadOnlyList<BulkDeleteFailureItemDto> Failed);

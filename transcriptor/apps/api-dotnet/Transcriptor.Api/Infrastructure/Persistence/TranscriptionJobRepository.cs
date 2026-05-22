@@ -28,4 +28,10 @@ public class TranscriptionJobRepository(ApplicationDbContext db) : ITranscriptio
 
     public Task SaveChangesAsync(CancellationToken cancellationToken = default) =>
         db.SaveChangesAsync(cancellationToken);
+
+    public Task RemoveAsync(TranscriptionJob job, CancellationToken cancellationToken = default)
+    {
+        db.TranscriptionJobs.Remove(job);
+        return Task.CompletedTask;
+    }
 }

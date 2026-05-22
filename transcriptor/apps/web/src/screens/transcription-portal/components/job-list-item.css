@@ -1,19 +1,39 @@
 .job-list-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
   width: 100%;
-  text-align: left;
-  padding: 0.75rem;
+  min-width: 0;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   background: #fff;
 }
 
-.job-list-item.selected {
+.job-list-item.selected,
+.job-list-item.checked {
   border-color: #2563eb;
   background: #eff6ff;
 }
 
+.job-list-item__checkbox {
+  margin: 0.85rem 0 0 0.65rem;
+  flex-shrink: 0;
+}
+
+.job-list-item__button {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-align: left;
+  padding: 0.75rem;
+  border: none;
+  background: transparent;
+  border-radius: 0 8px 8px 0;
+}
+
 .job-list-item__name {
   font-weight: 600;
+  min-width: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

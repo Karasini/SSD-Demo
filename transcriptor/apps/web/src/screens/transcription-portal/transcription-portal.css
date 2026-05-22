@@ -34,12 +34,47 @@
   overflow-y: auto;
 }
 
+.portal__list-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
 .portal__list h2 {
-  margin: 0 0 0.75rem;
+  margin: 0;
   font-size: 0.95rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: #5a6570;
+}
+
+.portal__list-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.portal__selection-count {
+  font-size: 0.85rem;
+  color: #5a6570;
+}
+
+.portal__bulk-message {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  color: #b45309;
+}
+
+button.secondary {
+  background: #f8fafc;
+}
+
+button.danger {
+  background: #dc2626;
+  color: #fff;
+  border-color: #dc2626;
 }
 
 .portal__list-items {

@@ -27,3 +27,13 @@ export interface TranscriptionJobListResponse {
   pageSize: number
   totalCount: number
 }
+
+export interface BulkDeleteFailureItem {
+  id: string
+  reason: string
+}
+
+export interface BulkDeleteTranscriptionJobsResponse {
+  deletedIds: string[]
+  failed: BulkDeleteFailureItem[]
+}

@@ -2,22 +2,20 @@ import asyncio
 import logging
 import tempfile
 from pathlib import Path
-from typing import Annotated
 from uuid import UUID
 
 import httpx
 from fastapi import BackgroundTasks, FastAPI, Header, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
-from app import warnings_filter
-
-warnings_filter.configure()
-
 from app.api_client import ApiClient
 from app.config import settings
 from app.transcription import map_failure_reason, transcribe_file
 
 logging.basicConfig(level=logging.INFO)
+logging.getLogger("matplotlib").setLevel(logging.WARNING)
+logging.getLogger("lightning").setLevel(logging.WARNING)
+logging.getLogger("lightning.pytorch").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Transcriptor Worker")
@@ -25,15 +23,16 @@ api_client = ApiClient()
 
 _active_jobs: set[str] = set()
 _completed_jobs: set[str] = set()
+_cancelled_jobs: set[str] = set()
 
 
 class RunJobRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
-    job_id: Annotated[UUID, Field(alias="jobId")]
-    media_download_url: Annotated[str, Field(alias="mediaDownloadUrl")]
-    file_name: Annotated[str, Field(alias="fileName")]
-    content_type: Annotated[str, Field(alias="contentType")]
+    job_id: UUID = Field(validation_alias="jobId")
+    media_download_url: str = Field(validation_alias="mediaDownloadUrl")
+    file_name: str = Field(validation_alias="fileName")
+    content_type: str = Field(validation_alias="contentType")
 
 
 def _verify_api_key(api_key: str | None) -> None:
@@ -41,9 +40,21 @@ def _verify_api_key(api_key: str | None) -> None:
         raise HTTPException(status_code=401, detail="Unauthorized")
 
 
+def _is_cancelled(job_id: str) -> bool:
+    return job_id in _cancelled_jobs
+
+
 async def _process_job(job_id: str, body: RunJobRequest) -> None:
     try:
-        await api_client.patch_job(job_id, {"status": "InProgress"})
+        if _is_cancelled(job_id):
+            return
+
+        if not await api_client.patch_job(job_id, {"status": "InProgress"}):
+            logger.info("Job %s not found on API before processing; stopping", job_id)
+            return
+
+        if _is_cancelled(job_id):
+            return
 
         if settings.mock_mode:
             await asyncio.sleep(settings.mock_delay_seconds)
@@ -55,27 +66,36 @@ async def _process_job(job_id: str, body: RunJobRequest) -> None:
                 response.raise_for_status()
                 media_path.write_bytes(response.content)
 
+            if _is_cancelled(job_id):
+                return
+
             loop = asyncio.get_running_loop()
             transcript, language = await loop.run_in_executor(
                 None, transcribe_file, media_path, body.file_name
             )
 
-        await api_client.patch_job(
+        if _is_cancelled(job_id):
+            return
+
+        if await api_client.patch_job(
             job_id,
             {
                 "status": "Completed",
                 "transcriptText": transcript,
                 "detectedLanguage": language,
             },
-        )
-        _completed_jobs.add(job_id)
+        ):
+            _completed_jobs.add(job_id)
     except Exception as exc:
+        if _is_cancelled(job_id):
+            return
         logger.exception("Job %s failed", job_id)
         reason = map_failure_reason(exc)
         try:
-            await api_client.patch_job(
-                job_id, {"status": "Failed", "failureReason": reason}
-            )
+            if not _is_cancelled(job_id):
+                await api_client.patch_job(
+                    job_id, {"status": "Failed", "failureReason": reason}
+                )
         except Exception:
             logger.exception("Failed to report failure for job %s", job_id)
     finally:
@@ -97,6 +117,9 @@ async def run_job(
     _verify_api_key(x_internal_api_key)
     job_key = str(job_id)
 
+    if job_key in _cancelled_jobs:
+        return {"status": "accepted", "message": "Job cancelled"}
+
     if job_key in _active_jobs or job_key in _completed_jobs:
         return {"status": "accepted", "message": "Job already running or completed"}
 
@@ -106,3 +129,15 @@ async def run_job(
     _active_jobs.add(job_key)
     background_tasks.add_task(_process_job, job_key, body)
     return {"status": "accepted"}
+
+
+@app.post("/internal/v1/jobs/{job_id}/cancel")
+async def cancel_job(
+    job_id: UUID,
+    x_internal_api_key: str | None = Header(default=None),
+) -> dict[str, str]:
+    _verify_api_key(x_internal_api_key)
+    job_key = str(job_id)
+    _cancelled_jobs.add(job_key)
+    _active_jobs.discard(job_key)
+    return {"status": "cancelled"}

@@ -5,6 +5,7 @@ import './job-detail.css'
 type JobDetailProps = {
   job: TranscriptionJobDetail | undefined
   isLoading: boolean
+  onRemove: () => void
 }
 
 function statusLabel(status: string) {
@@ -22,7 +23,7 @@ function statusLabel(status: string) {
   }
 }
 
-export function JobDetail({ job, isLoading }: JobDetailProps) {
+export function JobDetail({ job, isLoading, onRemove }: JobDetailProps) {
   if (isLoading && !job) {
     return <div className="job-detail job-detail--loading">Loading…</div>
   }
@@ -34,10 +35,15 @@ export function JobDetail({ job, isLoading }: JobDetailProps) {
   return (
     <div className="job-detail">
       <header className="job-detail__header">
-        <h2 title={job.fileName}>{job.fileName}</h2>
-        <span className={`status-badge status-${job.status.toLowerCase()}`}>
-          {statusLabel(job.status)}
-        </span>
+        <div className="job-detail__title-row">
+          <h2 title={job.fileName}>{job.fileName}</h2>
+          <span className={`status-badge status-${job.status.toLowerCase()}`}>
+            {statusLabel(job.status)}
+          </span>
+        </div>
+        <button type="button" className="danger-text" onClick={onRemove}>
+          Remove
+        </button>
       </header>
 
       {(job.status === 'Queued' || job.status === 'InProgress') && (

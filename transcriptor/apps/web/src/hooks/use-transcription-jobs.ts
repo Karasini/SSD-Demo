@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
+  bulkDeleteTranscriptionJobs,
   createTranscriptionJob,
+  deleteTranscriptionJob,
   getTranscriptionJob,
   isActiveStatus,
   listTranscriptionJobs,
@@ -42,6 +44,26 @@ export function useCreateTranscriptionJob() {
       file: File
       onUploadProgress?: (percent: number) => void
     }) => createTranscriptionJob(file, onUploadProgress),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['transcription-jobs'] })
+    },
+  })
+}
+
+export function useDeleteTranscriptionJob() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => deleteTranscriptionJob(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['transcription-jobs'] })
+    },
+  })
+}
+
+export function useBulkDeleteTranscriptionJobs() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (ids: string[]) => bulkDeleteTranscriptionJobs(ids),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transcription-jobs'] })
     },
