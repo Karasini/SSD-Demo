@@ -47,7 +47,8 @@ public class WorkerTriggerBackgroundService(
                             TranscriptionJobStatus.Failed,
                             null,
                             null,
-                            "Worker unavailable"),
+                            "Worker unavailable",
+                            null),
                         stoppingToken);
                 }
                 catch (Exception failEx)

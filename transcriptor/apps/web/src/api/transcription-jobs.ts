@@ -1,6 +1,7 @@
 import { apiClient } from './client'
 import type {
   BulkDeleteTranscriptionJobsResponse,
+  SpeakerInfo,
   TranscriptionJobDetail,
   TranscriptionJobListResponse,
 } from './types'
@@ -59,6 +60,18 @@ export async function bulkDeleteTranscriptionJobs(
   const { data } = await apiClient.post<BulkDeleteTranscriptionJobsResponse>(
     '/api/v1/transcription-jobs/bulk-delete',
     { ids },
+  )
+  return data
+}
+
+export async function renameSpeaker(
+  id: string,
+  speakerId: string,
+  displayName: string,
+): Promise<SpeakerInfo> {
+  const { data } = await apiClient.patch<SpeakerInfo>(
+    `/api/v1/transcription-jobs/${id}/speakers/${speakerId}`,
+    { displayName },
   )
   return data
 }

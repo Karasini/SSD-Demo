@@ -6,6 +6,7 @@ import {
   getTranscriptionJob,
   isActiveStatus,
   listTranscriptionJobs,
+  renameSpeaker,
 } from '../api/transcription-jobs'
 
 const POLL_INTERVAL_MS = 3000
@@ -66,6 +67,27 @@ export function useBulkDeleteTranscriptionJobs() {
     mutationFn: (ids: string[]) => bulkDeleteTranscriptionJobs(ids),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transcription-jobs'] })
+    },
+  })
+}
+
+export function useRenameSpeaker() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      jobId,
+      speakerId,
+      displayName,
+    }: {
+      jobId: string
+      speakerId: string
+      displayName: string
+    }) => renameSpeaker(jobId, speakerId, displayName),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ['transcription-jobs', 'detail', variables.jobId],
+      })
+      queryClient.invalidateQueries({ queryKey: ['transcription-jobs', 'list'] })
     },
   })
 }

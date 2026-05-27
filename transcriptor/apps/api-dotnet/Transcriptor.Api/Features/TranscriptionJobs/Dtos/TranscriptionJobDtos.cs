@@ -22,9 +22,23 @@ public record TranscriptionJobDetailDto(
     DateTimeOffset? CompletedAt,
     string? FailureReason,
     string? TranscriptText,
-    string? DetectedLanguage) : TranscriptionJobListItemDto(
+    string? DetectedLanguage,
+    IReadOnlyList<TranscriptSegmentDto>? Segments,
+    IReadOnlyList<SpeakerDto>? Speakers) : TranscriptionJobListItemDto(
     Id, FileName, FileSizeBytes, ContentType, Status,
     CreatedAt, UpdatedAt, CompletedAt, FailureReason);
+
+public record TranscriptSegmentDto(
+    string SpeakerId,
+    string SpeakerLabel,
+    double StartSec,
+    double EndSec,
+    string Text);
+
+public record SpeakerDto(
+    string SpeakerId,
+    string DisplayName,
+    string DefaultLabel);
 
 public record TranscriptionJobListResponseDto(
     IReadOnlyList<TranscriptionJobListItemDto> Items,
@@ -36,7 +50,8 @@ public record UpdateTranscriptionJobRequestDto(
     string Status,
     string? TranscriptText,
     string? DetectedLanguage,
-    string? FailureReason);
+    string? FailureReason,
+    IReadOnlyList<TranscriptSegmentDto>? Segments);
 
 public record BulkDeleteTranscriptionJobsRequestDto(IReadOnlyList<Guid> Ids);
 

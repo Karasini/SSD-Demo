@@ -12,6 +12,8 @@ using Transcriptor.Api.Features.TranscriptionJobs.GetTranscriptionJobById;
 using Transcriptor.Api.Features.TranscriptionJobs.GetTranscriptionJobById.Dtos;
 using Transcriptor.Api.Features.TranscriptionJobs.ListTranscriptionJobs;
 using Transcriptor.Api.Features.TranscriptionJobs.ListTranscriptionJobs.Dtos;
+using Transcriptor.Api.Features.TranscriptionJobs.RenameSpeaker;
+using Transcriptor.Api.Features.TranscriptionJobs.RenameSpeaker.Dtos;
 using Transcriptor.Api.Features.TranscriptionJobs.UpdateTranscriptionJobStatus;
 using Transcriptor.Api.Features.TranscriptionJobs.UpdateTranscriptionJobStatus.Dtos;
 
@@ -25,6 +27,7 @@ public static class TranscriptionJobsEndpoints
 
         group.MapGet("/", ListJobs);
         group.MapGet("/{id:guid}", GetJobById);
+        group.MapPatch("/{id:guid}/speakers/{speakerId}", RenameSpeaker);
         group.MapDelete("/{id:guid}", DeleteJob);
         group.MapPost("/bulk-delete", BulkDeleteJobs);
         group.MapPost("/", CreateJob)
@@ -161,7 +164,8 @@ public static class TranscriptionJobsEndpoints
                     body.Status,
                     body.TranscriptText,
                     body.DetectedLanguage,
-                    body.FailureReason),
+                    body.FailureReason,
+                    body.Segments),
                 cancellationToken);
 
             return result is null ? Results.NotFound() : Results.Ok(result);
@@ -171,6 +175,29 @@ public static class TranscriptionJobsEndpoints
             return Results.ValidationProblem(new Dictionary<string, string[]>
             {
                 ["status"] = [ex.Message]
+            });
+        }
+    }
+
+    private static async Task<IResult> RenameSpeaker(
+        Guid id,
+        string speakerId,
+        RenameSpeakerRequestDto body,
+        IRenameSpeakerHandler handler,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = await handler.HandleAsync(
+                new RenameSpeakerRequest(id, speakerId, body.DisplayName),
+                cancellationToken);
+            return result is null ? Results.NotFound() : Results.Ok(result);
+        }
+        catch (ValidationException ex)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["displayName"] = [ex.Message]
             });
         }
     }

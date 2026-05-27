@@ -60,10 +60,16 @@ namespace Transcriptor.Api.Infrastructure.Persistence.Migrations
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)");
 
+                    b.Property<string>("SpeakerAliasesJson")
+                        .HasColumnType("text");
+
                     b.Property<string>("StorageKey")
                         .IsRequired()
                         .HasMaxLength(1024)
                         .HasColumnType("character varying(1024)");
+
+                    b.Property<string>("TranscriptSegmentsJson")
+                        .HasColumnType("text");
 
                     b.Property<string>("TranscriptText")
                         .HasColumnType("text");

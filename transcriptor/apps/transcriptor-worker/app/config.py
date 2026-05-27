@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     whisper_batch_size: int = 8
     whisper_warmup_languages: str = "en, pl"  # WHISPER_WARMUP_LANGUAGES (comma-separated)
     ffmpeg_path: str = "ffmpeg"
+    hf_token: str | None = None
 
     @property
     def warmup_language_list(self) -> list[str]:

@@ -9,6 +9,8 @@ public class TranscriptionJob
     public string Status { get; set; } = TranscriptionJobStatus.Queued;
     public string StorageKey { get; set; } = string.Empty;
     public string? TranscriptText { get; set; }
+    public string? TranscriptSegmentsJson { get; set; }
+    public string? SpeakerAliasesJson { get; set; }
     public string? DetectedLanguage { get; set; }
     public string? FailureReason { get; set; }
     public DateTimeOffset CreatedAt { get; set; }

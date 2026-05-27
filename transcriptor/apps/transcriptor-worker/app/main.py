@@ -80,7 +80,7 @@ async def _process_job(job_id: str, body: RunJobRequest) -> None:
                 return
 
             loop = asyncio.get_running_loop()
-            transcript, language = await loop.run_in_executor(
+            transcript, language, segments = await loop.run_in_executor(
                 None, transcribe_file, media_path, body.file_name
             )
 
@@ -93,6 +93,7 @@ async def _process_job(job_id: str, body: RunJobRequest) -> None:
                 "status": "Completed",
                 "transcriptText": transcript,
                 "detectedLanguage": language,
+                "segments": segments,
             },
         ):
             _completed_jobs.add(job_id)

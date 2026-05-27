@@ -34,8 +34,59 @@ def _build_transcript_from_segments(segments: list[dict]) -> str:
     return "\n".join(line for line in lines if line)
 
 
-def transcribe_file(media_path: Path, file_name: str) -> tuple[str, str | None]:
-    """Returns (transcript_text, detected_language)."""
+def _normalize_speaker_segments(segments: list[dict]) -> list[dict]:
+    speaker_labels: dict[str, str] = {}
+    speaker_counter = 0
+    normalized: list[dict] = []
+
+    for segment in segments:
+        text = str(segment.get("text", "")).strip()
+        if not text:
+            continue
+
+        start = float(segment.get("start") or 0.0)
+        end = float(segment.get("end") or start)
+        if end <= start:
+            end = start + 0.01
+
+        raw_speaker = str(segment.get("speaker") or "UNKNOWN")
+        if raw_speaker not in speaker_labels:
+            speaker_counter += 1
+            speaker_labels[raw_speaker] = f"Person {speaker_counter}"
+
+        speaker_label = speaker_labels[raw_speaker]
+        speaker_id = f"spk_{speaker_counter}" if raw_speaker == "UNKNOWN" else raw_speaker
+        if raw_speaker in speaker_labels:
+            # Keep stable IDs by order of first appearance.
+            index = list(speaker_labels.keys()).index(raw_speaker) + 1
+            speaker_id = f"spk_{index}"
+
+        normalized.append(
+            {
+                "speakerId": speaker_id,
+                "speakerLabel": speaker_label,
+                "startSec": round(start, 2),
+                "endSec": round(end, 2),
+                "text": text,
+            }
+        )
+
+    if normalized:
+        return normalized
+
+    return [
+        {
+            "speakerId": "spk_1",
+            "speakerLabel": "Speaker",
+            "startSec": 0.0,
+            "endSec": 0.01,
+            "text": "",
+        }
+    ]
+
+
+def transcribe_file(media_path: Path, file_name: str) -> tuple[str, str | None, list[dict]]:
+    """Returns (transcript_text, detected_language, segments)."""
     try:
         import whisperx  # type: ignore
     except ImportError as exc:
@@ -72,8 +123,24 @@ def transcribe_file(media_path: Path, file_name: str) -> tuple[str, str | None]:
             except Exception as align_exc:
                 logger.warning("Alignment skipped: %s", align_exc)
 
+        if settings.hf_token and segments:
+            try:
+                diarize_model = whisperx.DiarizationPipeline(
+                    use_auth_token=settings.hf_token,
+                    device=settings.whisper_device,
+                )
+                diarized = diarize_model(audio)
+                speaker_result = whisperx.assign_word_speakers(
+                    diarized,
+                    {"segments": segments},
+                )
+                segments = speaker_result.get("segments", segments)
+            except Exception as diarize_exc:
+                logger.warning("Diarization skipped: %s", diarize_exc)
+
         text = _build_transcript_from_segments(segments)
-        return text, language
+        normalized_segments = _normalize_speaker_segments(segments)
+        return text, language, normalized_segments
     except RuntimeError:
         raise
     except Exception as exc:

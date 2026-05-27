@@ -20,6 +20,8 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             entity.Property(e => e.DetectedLanguage).HasMaxLength(16);
             entity.Property(e => e.FailureReason).HasMaxLength(2000);
             entity.Property(e => e.TranscriptText).HasColumnType("text");
+            entity.Property(e => e.TranscriptSegmentsJson).HasColumnType("text");
+            entity.Property(e => e.SpeakerAliasesJson).HasColumnType("text");
             entity.HasIndex(e => e.CreatedAt);
         });
     }
