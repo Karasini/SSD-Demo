@@ -1,8 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Transcriptor.Api;
-using Transcriptor.Api.Features.TranscriptionJobs.Commands;
-using Transcriptor.Api.Features.TranscriptionJobs.Handlers;
-using Transcriptor.Api.Features.TranscriptionJobs.Queries;
+using Transcriptor.Api.Infrastructure.DI;
 using Transcriptor.Api.Infrastructure.Persistence;
 using Transcriptor.Api.Infrastructure.Security;
 using Transcriptor.Api.Infrastructure.Storage;
@@ -32,13 +30,10 @@ builder.Services.AddHostedService<WorkerTriggerBackgroundService>();
 
 builder.Services.AddHttpClient<TranscriptionWorkerClient>();
 
-builder.Services.AddScoped<ICreateTranscriptionJobHandler, CreateTranscriptionJobHandler>();
-builder.Services.AddScoped<IListTranscriptionJobsHandler, ListTranscriptionJobsHandler>();
-builder.Services.AddScoped<IGetTranscriptionJobByIdHandler, GetTranscriptionJobByIdHandler>();
-builder.Services.AddScoped<IUpdateTranscriptionJobStatusHandler, UpdateTranscriptionJobStatusHandler>();
-builder.Services.AddScoped<ITriggerTranscriptionJobHandler, TriggerTranscriptionJobHandler>();
-builder.Services.AddScoped<IDeleteTranscriptionJobHandler, DeleteTranscriptionJobHandler>();
-builder.Services.AddScoped<IBulkDeleteTranscriptionJobsHandler, BulkDeleteTranscriptionJobsHandler>();
+var assembly = typeof(Program).Assembly;
+builder.Services.AddHandlers(assembly);
+builder.Services.AddCommands(assembly);
+builder.Services.AddQueries(assembly);
 
 builder.Services.AddCors(options =>
 {

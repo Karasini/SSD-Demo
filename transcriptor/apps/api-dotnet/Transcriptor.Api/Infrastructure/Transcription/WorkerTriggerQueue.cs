@@ -1,5 +1,9 @@
 using System.Threading.Channels;
-using Transcriptor.Api.Features.TranscriptionJobs.Commands;
+using Transcriptor.Api.Domain;
+using Transcriptor.Api.Features.TranscriptionJobs.TriggerTranscriptionJob;
+using Transcriptor.Api.Features.TranscriptionJobs.TriggerTranscriptionJob.Dtos;
+using Transcriptor.Api.Features.TranscriptionJobs.UpdateTranscriptionJobStatus;
+using Transcriptor.Api.Features.TranscriptionJobs.UpdateTranscriptionJobStatus.Dtos;
 
 namespace Transcriptor.Api.Infrastructure.Transcription;
 
@@ -27,7 +31,7 @@ public class WorkerTriggerBackgroundService(
             {
                 using var scope = scopeFactory.CreateScope();
                 var handler = scope.ServiceProvider.GetRequiredService<ITriggerTranscriptionJobHandler>();
-                await handler.HandleAsync(new TriggerTranscriptionJobCommand(jobId), stoppingToken);
+                await handler.HandleAsync(new TriggerTranscriptionJobRequest(jobId), stoppingToken);
             }
             catch (Exception ex)
             {
@@ -38,9 +42,9 @@ public class WorkerTriggerBackgroundService(
                     var failHandler = scope.ServiceProvider
                         .GetRequiredService<IUpdateTranscriptionJobStatusHandler>();
                     await failHandler.HandleAsync(
-                        new UpdateTranscriptionJobStatusCommand(
+                        new UpdateTranscriptionJobStatusRequest(
                             jobId,
-                            Domain.TranscriptionJobStatus.Failed,
+                            TranscriptionJobStatus.Failed,
                             null,
                             null,
                             "Worker unavailable"),

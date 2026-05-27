@@ -1,0 +1,73 @@
+---
+description: Physical directory layout for Transcriptor and where each type of file belongs
+alwaysApply: true
+---
+
+# Folder Structure
+
+Use this rule to decide where new code and docs should go. See `transcriptor-architecture.mdc` for dependency flow and design rules.
+
+## Root Layout
+
+- `apps/api-dotnet/` - .NET 8 solution and API project.
+- `apps/web/` - React + TypeScript web app.
+- `apps/transcriptor-worker/` - FastAPI worker with WhisperX transcription.
+- `infrastructure/` - local Docker Compose stack and container files.
+- `docs/` - project docs and high-level architecture notes.
+
+## API Project
+
+Inside `apps/api-dotnet/Transcriptor.Api/`:
+
+- `Program.cs` - host setup, DI, middleware, EF Core, and background services.
+- `EndpointsConfiguration.cs` - registers feature endpoint groups and `/health`.
+- `Features/` - vertical slices grouped by business area.
+  - `Features/{FeatureName}/Endpoint.cs` - route mapping for that feature.
+  - `Features/{FeatureName}/Dtos/` - shared DTOs and mapping helpers for the feature.
+  - `Features/{FeatureName}/Exceptions/` - shared feature exceptions.
+  - `Features/{FeatureName}/{UseCase}/` - one use case folder with `Handler.cs`, `Dtos/`, and nested `Commands/`, `Queries/`, or `Exceptions/` only when needed.
+- `Infrastructure/`
+  - `Persistence/` - `ApplicationDbContext`, repositories, and EF Core migrations.
+  - `Storage/` - object storage abstractions and MinIO implementation.
+  - `Transcription/` - worker HTTP client and background queue/trigger services.
+  - `Security/` - middleware such as internal API key checks.
+  - `DI/` - marker interfaces and auto-registration helpers.
+- `Domain/` - core entities and status/value concepts.
+- `Common/` - shared constants and constraints.
+
+## Web Project
+
+Inside `apps/web/src/`:
+
+- `api/` - HTTP client, request functions, and API DTO types.
+- `hooks/` - React Query hooks and UI-facing data orchestration.
+- `screens/` - page-level UI. Keep screen-specific components inside the screen folder.
+- `assets/` - static UI assets.
+- `App.tsx` and `main.tsx` - app composition and bootstrap.
+
+## Worker Project
+
+Inside `apps/transcriptor-worker/app/`:
+
+- `main.py` - FastAPI app, endpoints, lifecycle, and job loop.
+- `api_client.py` - callback client for API status updates.
+- `transcription.py` and `whisper_model.py` - WhisperX execution and model lifecycle.
+- `config.py` - environment settings.
+- `warnings_filter.py` - runtime warning filtering.
+
+## Placement Rules
+
+- Put new API behavior inside a feature slice first. Do not add MVC controllers.
+- Put new EF Core or repository code in `Infrastructure/Persistence/`.
+- Put new migrations under `Infrastructure/Persistence/Migrations/`.
+- Put web API calls in `src/api/` and consume them from `src/hooks/`.
+- Put new page-level UI in `src/screens/{screen-name}/` and keep local components near that screen.
+- Put worker-specific transcription logic in `apps/transcriptor-worker/app/`, not in the API.
+
+## Reference Files
+
+- `@apps/api-dotnet/Transcriptor.Api/Features/TranscriptionJobs/Endpoint.cs`
+- `@apps/api-dotnet/Transcriptor.Api/Features/TranscriptionJobs/CreateTranscriptionJob/Handler.cs`
+- `@apps/api-dotnet/Transcriptor.Api/Infrastructure/Persistence/ApplicationDbContext.cs`
+- `@apps/web/src/hooks/use-transcription-jobs.ts`
+- `@apps/transcriptor-worker/app/main.py`

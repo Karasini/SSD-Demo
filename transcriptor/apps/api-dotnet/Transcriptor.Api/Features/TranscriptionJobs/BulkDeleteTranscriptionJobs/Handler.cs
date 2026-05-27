@@ -1,45 +1,35 @@
 using Transcriptor.Api.Domain;
-using Transcriptor.Api.Features.TranscriptionJobs.Commands;
+using Transcriptor.Api.Features.TranscriptionJobs.BulkDeleteTranscriptionJobs.Dtos;
+using Transcriptor.Api.Features.TranscriptionJobs.DeleteTranscriptionJob.Commands;
 using Transcriptor.Api.Features.TranscriptionJobs.Dtos;
+using Transcriptor.Api.Features.TranscriptionJobs.Exceptions;
+using Transcriptor.Api.Infrastructure.DI;
 using Transcriptor.Api.Infrastructure.Persistence;
 using Transcriptor.Api.Infrastructure.Storage;
 using Transcriptor.Api.Infrastructure.Transcription;
 
-namespace Transcriptor.Api.Features.TranscriptionJobs.Handlers;
+namespace Transcriptor.Api.Features.TranscriptionJobs.BulkDeleteTranscriptionJobs;
 
-public class DeleteTranscriptionJobHandler(
-    ITranscriptionJobRepository repository,
-    IObjectStorage objectStorage,
-    TranscriptionWorkerClient workerClient) : IDeleteTranscriptionJobHandler
+public interface IBulkDeleteTranscriptionJobsHandler
 {
-    public async Task<bool> HandleAsync(
-        DeleteTranscriptionJobCommand command,
-        CancellationToken cancellationToken = default)
-    {
-        var job = await repository.GetByIdAsync(command.JobId, cancellationToken);
-        if (job is null)
-        {
-            return false;
-        }
-
-        await TranscriptionJobDeletion.ExecuteAsync(job, repository, objectStorage, workerClient, cancellationToken);
-        return true;
-    }
+    Task<BulkDeleteTranscriptionJobsResponseDto> HandleAsync(
+        BulkDeleteTranscriptionJobsRequest request,
+        CancellationToken cancellationToken = default);
 }
 
-public class BulkDeleteTranscriptionJobsHandler(
+public sealed class Handler(
     ITranscriptionJobRepository repository,
     IObjectStorage objectStorage,
     TranscriptionWorkerClient workerClient,
-    ILogger<BulkDeleteTranscriptionJobsHandler> logger) : IBulkDeleteTranscriptionJobsHandler
+    ILogger<Handler> logger) : IBulkDeleteTranscriptionJobsHandler, IHandler
 {
     private const int MaxBulkCount = 100;
 
     public async Task<BulkDeleteTranscriptionJobsResponseDto> HandleAsync(
-        BulkDeleteTranscriptionJobsCommand command,
+        BulkDeleteTranscriptionJobsRequest request,
         CancellationToken cancellationToken = default)
     {
-        var ids = command.Ids.Distinct().ToList();
+        var ids = request.Ids.Distinct().ToList();
         if (ids.Count == 0)
         {
             throw new ValidationException("At least one job id is required.");
@@ -66,7 +56,7 @@ public class BulkDeleteTranscriptionJobsHandler(
                     continue;
                 }
 
-                await TranscriptionJobDeletion.ExecuteAsync(
+                await DeleteTranscriptionJobCommand.ExecuteDeletionAsync(
                     job, repository, objectStorage, workerClient, cancellationToken);
                 deletedIds.Add(id);
             }
@@ -80,25 +70,5 @@ public class BulkDeleteTranscriptionJobsHandler(
         }
 
         return new BulkDeleteTranscriptionJobsResponseDto(deletedIds, failed);
-    }
-}
-
-internal static class TranscriptionJobDeletion
-{
-    public static async Task ExecuteAsync(
-        TranscriptionJob job,
-        ITranscriptionJobRepository repository,
-        IObjectStorage objectStorage,
-        TranscriptionWorkerClient workerClient,
-        CancellationToken cancellationToken)
-    {
-        if (TranscriptionJobStatus.IsActive(job.Status))
-        {
-            await workerClient.CancelJobAsync(job.Id, cancellationToken);
-        }
-
-        await objectStorage.DeleteAsync(job.StorageKey, cancellationToken);
-        await repository.RemoveAsync(job, cancellationToken);
-        await repository.SaveChangesAsync(cancellationToken);
     }
 }

@@ -1,37 +1,45 @@
 using Transcriptor.Api.Common;
 using Transcriptor.Api.Domain;
-using Transcriptor.Api.Features.TranscriptionJobs.Commands;
+using Transcriptor.Api.Features.TranscriptionJobs.CreateTranscriptionJob.Dtos;
+using Transcriptor.Api.Features.TranscriptionJobs.CreateTranscriptionJob.Exceptions;
 using Transcriptor.Api.Features.TranscriptionJobs.Dtos;
+using Transcriptor.Api.Features.TranscriptionJobs.Exceptions;
+using Transcriptor.Api.Infrastructure.DI;
 using Transcriptor.Api.Infrastructure.Persistence;
 using Transcriptor.Api.Infrastructure.Storage;
-using Transcriptor.Api.Infrastructure.Transcription;
 
-namespace Transcriptor.Api.Features.TranscriptionJobs.Handlers;
+namespace Transcriptor.Api.Features.TranscriptionJobs.CreateTranscriptionJob.Commands;
 
-public class CreateTranscriptionJobHandler(
-    ITranscriptionJobRepository repository,
-    IObjectStorage objectStorage,
-    WorkerTriggerQueue triggerQueue) : ICreateTranscriptionJobHandler
+public interface ICreateTranscriptionJobCommand : ICommand
 {
-    public async Task<TranscriptionJobDetailDto> HandleAsync(
-        CreateTranscriptionJobCommand command,
+    Task<TranscriptionJobDetailDto> ExecuteAsync(
+        CreateTranscriptionJobRequest request,
+        CancellationToken cancellationToken = default);
+}
+
+public sealed class CreateTranscriptionJobCommand(
+    ITranscriptionJobRepository repository,
+    IObjectStorage objectStorage) : ICreateTranscriptionJobCommand
+{
+    public async Task<TranscriptionJobDetailDto> ExecuteAsync(
+        CreateTranscriptionJobRequest request,
         CancellationToken cancellationToken = default)
     {
-        var extension = Path.GetExtension(command.FileName);
+        var extension = Path.GetExtension(request.FileName);
         if (string.IsNullOrEmpty(extension) || !UploadConstraints.AllowedExtensions.Contains(extension))
         {
             throw new ValidationException(
                 $"Unsupported file type. Allowed: {UploadConstraints.AllowedExtensionsDisplay}.");
         }
 
-        if (command.FileSizeBytes > UploadConstraints.MaxFileSizeBytes)
+        if (request.FileSizeBytes > UploadConstraints.MaxFileSizeBytes)
         {
             throw new PayloadTooLargeException("Maximum file size is 2 GB.");
         }
 
         var contentTypeOk = UploadConstraints.AllowedContentTypePrefixes.Any(p =>
-                command.ContentType.StartsWith(p, StringComparison.OrdinalIgnoreCase))
-            || string.Equals(command.ContentType, "application/octet-stream", StringComparison.OrdinalIgnoreCase);
+                request.ContentType.StartsWith(p, StringComparison.OrdinalIgnoreCase))
+            || string.Equals(request.ContentType, "application/octet-stream", StringComparison.OrdinalIgnoreCase);
 
         if (!contentTypeOk)
         {
@@ -43,14 +51,14 @@ public class CreateTranscriptionJobHandler(
         var storageKey = $"transcription-jobs/{jobId}/source{extension}";
         var now = DateTimeOffset.UtcNow;
 
-        await objectStorage.UploadAsync(storageKey, command.FileStream, command.ContentType, cancellationToken);
+        await objectStorage.UploadAsync(storageKey, request.FileStream, request.ContentType, cancellationToken);
 
         var job = new TranscriptionJob
         {
             Id = jobId,
-            FileName = command.FileName,
-            FileSizeBytes = command.FileSizeBytes,
-            ContentType = command.ContentType,
+            FileName = request.FileName,
+            FileSizeBytes = request.FileSizeBytes,
+            ContentType = request.ContentType,
             Status = TranscriptionJobStatus.Queued,
             StorageKey = storageKey,
             CreatedAt = now,
@@ -59,12 +67,7 @@ public class CreateTranscriptionJobHandler(
 
         await repository.AddAsync(job, cancellationToken);
         await repository.SaveChangesAsync(cancellationToken);
-        await triggerQueue.EnqueueAsync(jobId, cancellationToken);
 
         return job.ToDetail();
     }
 }
-
-public class ValidationException(string message) : Exception(message);
-
-public class PayloadTooLargeException(string message) : Exception(message);

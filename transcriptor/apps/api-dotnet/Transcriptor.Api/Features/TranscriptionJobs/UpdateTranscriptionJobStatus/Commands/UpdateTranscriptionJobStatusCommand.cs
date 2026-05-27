@@ -1,19 +1,28 @@
 using Transcriptor.Api.Common;
 using Transcriptor.Api.Domain;
-using Transcriptor.Api.Features.TranscriptionJobs.Commands;
 using Transcriptor.Api.Features.TranscriptionJobs.Dtos;
+using Transcriptor.Api.Features.TranscriptionJobs.Exceptions;
+using Transcriptor.Api.Features.TranscriptionJobs.UpdateTranscriptionJobStatus.Dtos;
+using Transcriptor.Api.Infrastructure.DI;
 using Transcriptor.Api.Infrastructure.Persistence;
 
-namespace Transcriptor.Api.Features.TranscriptionJobs.Handlers;
+namespace Transcriptor.Api.Features.TranscriptionJobs.UpdateTranscriptionJobStatus.Commands;
 
-public class UpdateTranscriptionJobStatusHandler(ITranscriptionJobRepository repository)
-    : IUpdateTranscriptionJobStatusHandler
+public interface IUpdateTranscriptionJobStatusCommand : ICommand
 {
-    public async Task<TranscriptionJobDetailDto?> HandleAsync(
-        UpdateTranscriptionJobStatusCommand command,
+    Task<TranscriptionJobDetailDto?> ExecuteAsync(
+        UpdateTranscriptionJobStatusRequest request,
+        CancellationToken cancellationToken = default);
+}
+
+public sealed class UpdateTranscriptionJobStatusCommand(ITranscriptionJobRepository repository)
+    : IUpdateTranscriptionJobStatusCommand
+{
+    public async Task<TranscriptionJobDetailDto?> ExecuteAsync(
+        UpdateTranscriptionJobStatusRequest request,
         CancellationToken cancellationToken = default)
     {
-        var job = await repository.GetByIdAsync(command.JobId, cancellationToken);
+        var job = await repository.GetByIdAsync(request.JobId, cancellationToken);
         if (job is null)
         {
             return null;
@@ -27,7 +36,7 @@ public class UpdateTranscriptionJobStatusHandler(ITranscriptionJobRepository rep
         var now = DateTimeOffset.UtcNow;
         job.UpdatedAt = now;
 
-        switch (command.Status)
+        switch (request.Status)
         {
             case TranscriptionJobStatus.InProgress:
                 if (job.Status == TranscriptionJobStatus.Queued)
@@ -37,12 +46,12 @@ public class UpdateTranscriptionJobStatusHandler(ITranscriptionJobRepository rep
                 break;
 
             case TranscriptionJobStatus.Completed:
-                if (command.TranscriptText is null)
+                if (request.TranscriptText is null)
                 {
                     throw new ValidationException("Transcript text is required when status is Completed.");
                 }
 
-                if (command.TranscriptText.Length > UploadConstraints.MaxTranscriptTextLength)
+                if (request.TranscriptText.Length > UploadConstraints.MaxTranscriptTextLength)
                 {
                     job.Status = TranscriptionJobStatus.Failed;
                     job.FailureReason = "Transcript is too large to store.";
@@ -50,20 +59,20 @@ public class UpdateTranscriptionJobStatusHandler(ITranscriptionJobRepository rep
                 else
                 {
                     job.Status = TranscriptionJobStatus.Completed;
-                    job.TranscriptText = command.TranscriptText;
-                    job.DetectedLanguage = command.DetectedLanguage;
+                    job.TranscriptText = request.TranscriptText;
+                    job.DetectedLanguage = request.DetectedLanguage;
                     job.CompletedAt = now;
                 }
                 break;
 
             case TranscriptionJobStatus.Failed:
                 job.Status = TranscriptionJobStatus.Failed;
-                job.FailureReason = command.FailureReason
+                job.FailureReason = request.FailureReason
                     ?? "Transcription failed. Please try again with another file.";
                 break;
 
             default:
-                throw new ValidationException($"Unsupported status transition to {command.Status}.");
+                throw new ValidationException($"Unsupported status transition to {request.Status}.");
         }
 
         await repository.SaveChangesAsync(cancellationToken);

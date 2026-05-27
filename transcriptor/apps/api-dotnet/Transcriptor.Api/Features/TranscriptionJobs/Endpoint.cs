@@ -1,8 +1,19 @@
 using Microsoft.AspNetCore.Mvc;
-using Transcriptor.Api.Features.TranscriptionJobs.Commands;
+using Transcriptor.Api.Features.TranscriptionJobs.BulkDeleteTranscriptionJobs;
+using Transcriptor.Api.Features.TranscriptionJobs.BulkDeleteTranscriptionJobs.Dtos;
+using Transcriptor.Api.Features.TranscriptionJobs.CreateTranscriptionJob;
+using Transcriptor.Api.Features.TranscriptionJobs.CreateTranscriptionJob.Dtos;
+using Transcriptor.Api.Features.TranscriptionJobs.CreateTranscriptionJob.Exceptions;
+using Transcriptor.Api.Features.TranscriptionJobs.DeleteTranscriptionJob;
+using Transcriptor.Api.Features.TranscriptionJobs.DeleteTranscriptionJob.Dtos;
 using Transcriptor.Api.Features.TranscriptionJobs.Dtos;
-using Transcriptor.Api.Features.TranscriptionJobs.Handlers;
-using Transcriptor.Api.Features.TranscriptionJobs.Queries;
+using Transcriptor.Api.Features.TranscriptionJobs.Exceptions;
+using Transcriptor.Api.Features.TranscriptionJobs.GetTranscriptionJobById;
+using Transcriptor.Api.Features.TranscriptionJobs.GetTranscriptionJobById.Dtos;
+using Transcriptor.Api.Features.TranscriptionJobs.ListTranscriptionJobs;
+using Transcriptor.Api.Features.TranscriptionJobs.ListTranscriptionJobs.Dtos;
+using Transcriptor.Api.Features.TranscriptionJobs.UpdateTranscriptionJobStatus;
+using Transcriptor.Api.Features.TranscriptionJobs.UpdateTranscriptionJobStatus.Dtos;
 
 namespace Transcriptor.Api.Features.TranscriptionJobs;
 
@@ -32,7 +43,7 @@ public static class TranscriptionJobsEndpoints
         CancellationToken cancellationToken)
     {
         var result = await handler.HandleAsync(
-            new ListTranscriptionJobsQuery(page ?? 1, pageSize ?? 50),
+            new ListTranscriptionJobsRequest(page ?? 1, pageSize ?? 50),
             cancellationToken);
         return Results.Ok(result);
     }
@@ -42,7 +53,7 @@ public static class TranscriptionJobsEndpoints
         IGetTranscriptionJobByIdHandler handler,
         CancellationToken cancellationToken)
     {
-        var job = await handler.HandleAsync(new GetTranscriptionJobByIdQuery(id), cancellationToken);
+        var job = await handler.HandleAsync(new GetTranscriptionJobByIdRequest(id), cancellationToken);
         return job is null ? Results.NotFound() : Results.Ok(job);
     }
 
@@ -73,7 +84,7 @@ public static class TranscriptionJobsEndpoints
         {
             await using var stream = file.OpenReadStream();
             var result = await handler.HandleAsync(
-                new CreateTranscriptionJobCommand(stream, file.FileName, file.ContentType, file.Length),
+                new CreateTranscriptionJobRequest(stream, file.FileName, file.ContentType, file.Length),
                 cancellationToken);
             return Results.Created($"/api/v1/transcription-jobs/{result.Id}", result);
         }
@@ -95,7 +106,7 @@ public static class TranscriptionJobsEndpoints
         IDeleteTranscriptionJobHandler handler,
         CancellationToken cancellationToken)
     {
-        var deleted = await handler.HandleAsync(new DeleteTranscriptionJobCommand(id), cancellationToken);
+        var deleted = await handler.HandleAsync(new DeleteTranscriptionJobRequest(id), cancellationToken);
         if (!deleted)
         {
             return Results.Problem(
@@ -123,7 +134,7 @@ public static class TranscriptionJobsEndpoints
         try
         {
             var result = await handler.HandleAsync(
-                new BulkDeleteTranscriptionJobsCommand(body.Ids),
+                new BulkDeleteTranscriptionJobsRequest(body.Ids),
                 cancellationToken);
             return Results.Ok(result);
         }
@@ -145,7 +156,7 @@ public static class TranscriptionJobsEndpoints
         try
         {
             var result = await handler.HandleAsync(
-                new UpdateTranscriptionJobStatusCommand(
+                new UpdateTranscriptionJobStatusRequest(
                     id,
                     body.Status,
                     body.TranscriptText,

@@ -1,0 +1,58 @@
+---
+description: Monorepo architecture, app boundaries, and API slice orchestration for Transcriptor
+alwaysApply: true
+---
+
+# Architecture
+
+Transcriptor is a monorepo with three app boundaries: web, API, and worker. Keep the boundaries simple and explicit.
+
+## System Flow
+
+- Web calls the API only.
+- API stores job metadata in PostgreSQL and files in MinIO.
+- API creates jobs, then enqueues worker triggering in a background service.
+- Worker downloads media, runs WhisperX, and sends job status updates back to the API with the internal API key.
+- The API is the source of truth for job state.
+
+## API Architecture
+
+- Use Minimal API and vertical slices under `Features/`.
+- Keep endpoint methods thin: read HTTP input, do HTTP-specific validation, then delegate to a handler.
+- Use one handler interface plus `Handler.cs` per use case.
+- Keep handlers orchestration-first. They may call commands, queries, repositories, storage, queues, or worker clients.
+- Create commands and queries only when they add real clarity, reuse, or separation. Do not add tiny wrappers with no value.
+- Keep domain types in `Domain/`.
+- Keep technical concerns in `Infrastructure/` such as EF Core, MinIO, worker HTTP, middleware, background services, and DI registration.
+- Use `IHandler`, `ICommand`, and `IQuery` marker interfaces so registration stays automatic through `AddHandlers`, `AddCommands`, and `AddQueries`.
+
+## Web Architecture
+
+- Keep raw HTTP and request shaping in `src/api/`.
+- Keep caching, polling, and mutation orchestration in `src/hooks/`.
+- Keep screens and components focused on rendering and user interaction.
+- Do not call the backend directly from many components when one hook can own the flow.
+
+## Worker Architecture
+
+- Keep FastAPI endpoint wiring and lifecycle in `app/main.py`.
+- Keep API callback logic in `app/api_client.py`.
+- Keep transcription and model handling in `app/transcription.py` and `app/whisper_model.py`.
+- Worker should execute jobs, not own product rules or persistent state.
+
+## Dependency Rules
+
+- Web must not talk to PostgreSQL, MinIO, or the worker directly.
+- Worker must not write to the database directly; it reports through the API.
+- Keep business decisions in handlers, commands, and queries even when a background service starts the flow.
+- Do not put business logic in EF Core repositories, Minimal API endpoint methods, or React components.
+- Prefer DI and explicit interfaces. Do not use static service access for app behavior.
+
+## Reference Files
+
+- `@docs/architecture.md`
+- `@apps/api-dotnet/Transcriptor.Api/Program.cs`
+- `@apps/api-dotnet/Transcriptor.Api/Features/TranscriptionJobs/Endpoint.cs`
+- `@apps/api-dotnet/Transcriptor.Api/Infrastructure/DI/HandlerRegistration.cs`
+- `@apps/api-dotnet/Transcriptor.Api/Infrastructure/Transcription/WorkerTriggerQueue.cs`
+- `@apps/transcriptor-worker/app/main.py`
