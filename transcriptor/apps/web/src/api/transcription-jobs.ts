@@ -62,3 +62,15 @@ export async function bulkDeleteTranscriptionJobs(
   )
   return data
 }
+
+export async function updateTranscriptionSpeakerLabel(
+  jobId: string,
+  speakerKey: string,
+  displayName: string,
+): Promise<TranscriptionJobDetail> {
+  const { data } = await apiClient.patch<TranscriptionJobDetail>(
+    `/api/v1/transcription-jobs/${jobId}/speakers/${encodeURIComponent(speakerKey)}`,
+    { displayName },
+  )
+  return data
+}

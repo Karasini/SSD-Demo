@@ -13,7 +13,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from app.api_client import ApiClient
 from app.config import settings
-from app.transcription import map_failure_reason, transcribe_file
+from app.transcription import map_failure_reason, result_to_callback_payload, transcribe_file
 from app.whisper_model import is_ready, wait_ready, warmup
 
 logging.basicConfig(level=logging.INFO)
@@ -25,6 +25,11 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
+    if not settings.hf_token.strip():
+        raise RuntimeError(
+            "HF_TOKEN is required for speaker diarization. "
+            "Set HF_TOKEN in the worker environment."
+        )
     logger.info("Warming up Whisper models at startup")
     loop = asyncio.get_running_loop()
     await loop.run_in_executor(None, warmup)
@@ -80,21 +85,14 @@ async def _process_job(job_id: str, body: RunJobRequest) -> None:
                 return
 
             loop = asyncio.get_running_loop()
-            transcript, language = await loop.run_in_executor(
+            result = await loop.run_in_executor(
                 None, transcribe_file, media_path, body.file_name
             )
 
         if _is_cancelled(job_id):
             return
 
-        if await api_client.patch_job(
-            job_id,
-            {
-                "status": "Completed",
-                "transcriptText": transcript,
-                "detectedLanguage": language,
-            },
-        ):
+        if await api_client.patch_job(job_id, result_to_callback_payload(result)):
             _completed_jobs.add(job_id)
     except Exception as exc:
         if _is_cancelled(job_id):

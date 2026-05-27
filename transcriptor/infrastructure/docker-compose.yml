@@ -64,6 +64,7 @@ services:
     environment:
       API_BASE_URL: http://api:8080
       INTERNAL_API_KEY: dev-internal-key
+      HF_TOKEN: ${HF_TOKEN:?Set HF_TOKEN in your environment for speaker diarization}
       WHISPER_MODEL: medium
       WHISPER_DEVICE: cpu
       WHISPER_COMPUTE_TYPE: int8

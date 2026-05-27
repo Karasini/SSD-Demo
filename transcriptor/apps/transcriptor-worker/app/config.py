@@ -6,6 +6,7 @@ class Settings(BaseSettings):
 
     internal_api_key: str = "dev-internal-key"
     api_base_url: str = "http://api:8080"
+    hf_token: str = ""  # HF_TOKEN — required for diarization
     whisper_model: str = "base"  # WHISPER_MODEL
     whisper_device: str = "cpu"  # WHISPER_DEVICE
     whisper_compute_type: str = "int8"  # WHISPER_COMPUTE_TYPE

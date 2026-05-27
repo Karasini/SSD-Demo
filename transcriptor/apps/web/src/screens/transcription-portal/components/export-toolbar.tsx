@@ -3,7 +3,7 @@ import './export-toolbar.css'
 
 type ExportToolbarProps = {
   fileName: string
-  transcriptText: string
+  exportText: string
 }
 
 function downloadFileName(original: string): string {
@@ -12,12 +12,12 @@ function downloadFileName(original: string): string {
   return `${base}.txt`
 }
 
-export function ExportToolbar({ fileName, transcriptText }: ExportToolbarProps) {
+export function ExportToolbar({ fileName, exportText }: ExportToolbarProps) {
   const [message, setMessage] = useState<string | null>(null)
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(transcriptText)
+      await navigator.clipboard.writeText(exportText)
       setMessage('Copied to clipboard')
     } catch {
       setMessage('Copy failed')
@@ -27,7 +27,7 @@ export function ExportToolbar({ fileName, transcriptText }: ExportToolbarProps) 
 
   const handleDownload = () => {
     try {
-      const blob = new Blob([transcriptText], { type: 'text/plain' })
+      const blob = new Blob([exportText], { type: 'text/plain' })
       const url = URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url

@@ -14,6 +14,8 @@ using Transcriptor.Api.Features.TranscriptionJobs.ListTranscriptionJobs;
 using Transcriptor.Api.Features.TranscriptionJobs.ListTranscriptionJobs.Dtos;
 using Transcriptor.Api.Features.TranscriptionJobs.UpdateTranscriptionJobStatus;
 using Transcriptor.Api.Features.TranscriptionJobs.UpdateTranscriptionJobStatus.Dtos;
+using Transcriptor.Api.Features.TranscriptionJobs.UpdateTranscriptionSpeakerLabel;
+using Transcriptor.Api.Features.TranscriptionJobs.UpdateTranscriptionSpeakerLabel.Dtos;
 
 namespace Transcriptor.Api.Features.TranscriptionJobs;
 
@@ -25,6 +27,7 @@ public static class TranscriptionJobsEndpoints
 
         group.MapGet("/", ListJobs);
         group.MapGet("/{id:guid}", GetJobById);
+        group.MapPatch("/{jobId:guid}/speakers/{speakerKey}", UpdateSpeakerLabel);
         group.MapDelete("/{id:guid}", DeleteJob);
         group.MapPost("/bulk-delete", BulkDeleteJobs);
         group.MapPost("/", CreateJob)
@@ -147,6 +150,60 @@ public static class TranscriptionJobsEndpoints
         }
     }
 
+    private static async Task<IResult> UpdateSpeakerLabel(
+        Guid jobId,
+        string speakerKey,
+        UpdateTranscriptionSpeakerLabelRequestDto body,
+        IUpdateTranscriptionSpeakerLabelHandler handler,
+        CancellationToken cancellationToken)
+    {
+        if (body.DisplayName is null)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["displayName"] = ["Display name is required."]
+            });
+        }
+
+        try
+        {
+            var result = await handler.HandleAsync(
+                new UpdateTranscriptionSpeakerLabelRequest(jobId, speakerKey, body.DisplayName),
+                cancellationToken);
+
+            if (result is null)
+            {
+                return Results.Problem(
+                    detail: "Transcription job was not found.",
+                    statusCode: StatusCodes.Status404NotFound,
+                    title: "Not Found");
+            }
+
+            return Results.Ok(result);
+        }
+        catch (ValidationException ex)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["displayName"] = [ex.Message]
+            });
+        }
+        catch (ConflictException ex)
+        {
+            return Results.Problem(
+                detail: ex.Message,
+                statusCode: StatusCodes.Status409Conflict,
+                title: "Conflict");
+        }
+        catch (ResourceNotFoundException ex)
+        {
+            return Results.Problem(
+                detail: ex.Message,
+                statusCode: StatusCodes.Status404NotFound,
+                title: "Not Found");
+        }
+    }
+
     private static async Task<IResult> UpdateJobStatus(
         Guid id,
         UpdateTranscriptionJobRequestDto body,
@@ -161,7 +218,10 @@ public static class TranscriptionJobsEndpoints
                     body.Status,
                     body.TranscriptText,
                     body.DetectedLanguage,
-                    body.FailureReason),
+                    body.FailureReason,
+                    body.HasDiarization,
+                    body.Segments,
+                    body.Speakers),
                 cancellationToken);
 
             return result is null ? Results.NotFound() : Results.Ok(result);

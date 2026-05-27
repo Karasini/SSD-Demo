@@ -1,3 +1,5 @@
+using Transcriptor.Api.Features.TranscriptionJobs.Dtos;
+
 namespace Transcriptor.Api.Features.TranscriptionJobs.UpdateTranscriptionJobStatus.Dtos;
 
 public record UpdateTranscriptionJobStatusRequest(
@@ -5,4 +7,7 @@ public record UpdateTranscriptionJobStatusRequest(
     string Status,
     string? TranscriptText,
     string? DetectedLanguage,
-    string? FailureReason);
+    string? FailureReason,
+    bool? HasDiarization,
+    IReadOnlyList<CallbackTranscriptSegmentDto>? Segments,
+    IReadOnlyList<CallbackTranscriptionSpeakerDto>? Speakers);

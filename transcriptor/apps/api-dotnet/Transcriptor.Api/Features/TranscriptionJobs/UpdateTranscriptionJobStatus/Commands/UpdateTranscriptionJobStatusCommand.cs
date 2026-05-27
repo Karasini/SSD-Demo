@@ -46,23 +46,44 @@ public sealed class UpdateTranscriptionJobStatusCommand(ITranscriptionJobReposit
                 break;
 
             case TranscriptionJobStatus.Completed:
-                if (request.TranscriptText is null)
-                {
-                    throw new ValidationException("Transcript text is required when status is Completed.");
-                }
+                TranscriptionJobDiarization.ValidateCompletedCallback(
+                    request.TranscriptText,
+                    request.HasDiarization,
+                    request.Segments,
+                    request.Speakers);
 
-                if (request.TranscriptText.Length > UploadConstraints.MaxTranscriptTextLength)
+                if (request.TranscriptText!.Length > UploadConstraints.MaxTranscriptTextLength)
                 {
                     job.Status = TranscriptionJobStatus.Failed;
                     job.FailureReason = "Transcript is too large to store.";
+                    break;
                 }
-                else
+
+                var storedSegments = request.Segments!
+                    .Select(s => new TranscriptSegment
+                    {
+                        Index = s.Index,
+                        SpeakerKey = s.SpeakerKey,
+                        StartSeconds = s.StartSeconds,
+                        EndSeconds = s.EndSeconds,
+                        Text = s.Text.Trim()
+                    })
+                    .ToList();
+
+                var segmentsJson = TranscriptionJobDiarization.SerializeSegments(storedSegments);
+                if (segmentsJson.Length > UploadConstraints.MaxTranscriptTextLength)
                 {
-                    job.Status = TranscriptionJobStatus.Completed;
-                    job.TranscriptText = request.TranscriptText;
-                    job.DetectedLanguage = request.DetectedLanguage;
-                    job.CompletedAt = now;
+                    job.Status = TranscriptionJobStatus.Failed;
+                    job.FailureReason = "Transcript is too large to store.";
+                    break;
                 }
+
+                job.Status = TranscriptionJobStatus.Completed;
+                job.TranscriptText = request.TranscriptText;
+                job.DetectedLanguage = request.DetectedLanguage;
+                job.TranscriptSegmentsJson = segmentsJson;
+                job.SpeakerLabelsJson = TranscriptionJobDiarization.SerializeSpeakerLabels(new Dictionary<string, string>());
+                job.CompletedAt = now;
                 break;
 
             case TranscriptionJobStatus.Failed:

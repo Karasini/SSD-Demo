@@ -1,0 +1,72 @@
+.rename-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 50;
+}
+
+.rename-dialog {
+  width: min(100%, 420px);
+  background: #fff;
+  border-radius: 10px;
+  padding: 1.25rem;
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.2);
+}
+
+.rename-dialog h3 {
+  margin: 0 0 0.5rem;
+}
+
+.rename-dialog__hint {
+  margin: 0 0 1rem;
+  color: #475569;
+}
+
+.rename-dialog label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.35rem;
+}
+
+.rename-dialog input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+}
+
+.rename-dialog__error {
+  color: #dc2626;
+  margin: 0.5rem 0 0;
+}
+
+.rename-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.rename-dialog__actions button {
+  padding: 0.45rem 0.9rem;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  cursor: pointer;
+}
+
+.rename-dialog__actions button[type='submit'] {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #fff;
+}
+
+.rename-dialog__actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

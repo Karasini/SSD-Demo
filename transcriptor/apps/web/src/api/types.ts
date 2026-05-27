@@ -16,9 +16,26 @@ export interface TranscriptionJobListItem {
   failureReason: string | null
 }
 
+export interface TranscriptSegment {
+  index: number
+  speakerKey: string
+  startSeconds: number
+  endSeconds: number
+  text: string
+}
+
+export interface TranscriptionSpeaker {
+  speakerKey: string
+  defaultLabel: string
+  displayName: string
+}
+
 export interface TranscriptionJobDetail extends TranscriptionJobListItem {
   transcriptText: string | null
   detectedLanguage: string | null
+  hasDiarization: boolean
+  segments: TranscriptSegment[]
+  speakers: TranscriptionSpeaker[]
 }
 
 export interface TranscriptionJobListResponse {

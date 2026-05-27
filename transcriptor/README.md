@@ -20,6 +20,7 @@ From the repository root:
 
 ```bash
 cd infrastructure
+cp .env.example .env   # set HF_TOKEN (Hugging Face read token for speaker diarization)
 docker compose up --build
 ```
 
@@ -58,7 +59,9 @@ Uses `appsettings.Development.json` (Postgres on localhost:5432, MinIO on localh
 cd apps/transcriptor-worker
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
+cp .env.example .env   # set HF_TOKEN
 export API_BASE_URL=http://localhost:8080 INTERNAL_API_KEY=dev-internal-key
+export HF_TOKEN=your-huggingface-read-token
 export WHISPER_MODEL=base WHISPER_DEVICE=cpu WHISPER_COMPUTE_TYPE=int8
 uvicorn app.main:app --reload --port 8000
 ```
@@ -90,8 +93,11 @@ The Docker image **pre-downloads** weights at `docker compose build` (slow build
 | `WHISPER_DEVICE` | `cpu` | `cuda` when GPU available |
 | `WHISPER_COMPUTE_TYPE` | `int8` | `float16` on GPU |
 | `WHISPER_WARMUP_LANGUAGES` | `en` | Comma-separated alignment languages to preload (e.g. `en,pl`) |
+| `HF_TOKEN` | — | **Required.** Hugging Face read token with access to pyannote diarization models used by WhisperX |
 
-Ensure `ffmpeg` is on `PATH` for video inputs.
+Ensure `ffmpeg` is on `PATH` for video inputs. Accept the pyannote model terms on [huggingface.co](https://huggingface.co) before running diarization.
+
+Every new job runs transcribe → align → **diarize**. Missing `HF_TOKEN` or diarization failure marks the job **Failed** (no plain-text-only completion).
 
 Harmless startup noise (suppressed when possible): pyannote probing **torchcodec** in CPU Docker — it looks for CUDA libs (`libnvrtc`) and prints FFmpeg version tracebacks, but WhisperX uses **ffmpeg** for audio, not torchcodec.
 
@@ -108,12 +114,13 @@ docker compose up -d worker
 | Method | Path | Description |
 | --- | --- | --- |
 | GET | `/api/v1/transcription-jobs` | List jobs (newest first) |
-| GET | `/api/v1/transcription-jobs/{id}` | Job detail |
+| GET | `/api/v1/transcription-jobs/{id}` | Job detail (segments + speakers when diarized) |
 | POST | `/api/v1/transcription-jobs` | Multipart upload (`file`) |
+| PATCH | `/api/v1/transcription-jobs/{id}/speakers/{speakerKey}` | Rename speaker display name |
 | PATCH | `/api/internal/v1/transcription-jobs/{id}` | Worker callback (`X-Internal-Api-Key`) |
 
 ## Configuration
 
 Shared secret for API ↔ worker: `InternalApi:ApiKey` / `INTERNAL_API_KEY` (default `dev-internal-key`).
 
-See feature specs in the knowledge-base: `Transcriptor/Features/1. Web transcription portal/`.
+See feature specs in the knowledge-base: `Transcriptor/Features/1. Web transcription portal/`, `3. Speaker diarization/`.
