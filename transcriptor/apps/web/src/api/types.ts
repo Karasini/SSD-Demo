@@ -19,6 +19,8 @@ export interface TranscriptionJobListItem {
 export interface TranscriptionJobDetail extends TranscriptionJobListItem {
   transcriptText: string | null
   detectedLanguage: string | null
+  segments: TranscriptSegment[] | null
+  speakers: SpeakerInfo[] | null
 }
 
 export interface TranscriptionJobListResponse {
@@ -36,4 +38,18 @@ export interface BulkDeleteFailureItem {
 export interface BulkDeleteTranscriptionJobsResponse {
   deletedIds: string[]
   failed: BulkDeleteFailureItem[]
+}
+
+export interface TranscriptSegment {
+  speakerId: string
+  speakerLabel: string
+  startSec: number
+  endSec: number
+  text: string
+}
+
+export interface SpeakerInfo {
+  speakerId: string
+  displayName: string
+  defaultLabel: string
 }

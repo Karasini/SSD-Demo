@@ -5,6 +5,7 @@ import {
   useBulkDeleteTranscriptionJobs,
   useCreateTranscriptionJob,
   useDeleteTranscriptionJob,
+  useRenameSpeaker,
   useTranscriptionJobDetail,
   useTranscriptionJobList,
 } from '../../hooks/use-transcription-jobs'
@@ -34,6 +35,7 @@ export function TranscriptionPortal() {
   const createMutation = useCreateTranscriptionJob()
   const deleteMutation = useDeleteTranscriptionJob()
   const bulkDeleteMutation = useBulkDeleteTranscriptionJobs()
+  const renameSpeakerMutation = useRenameSpeaker()
 
   const jobs = listQuery.data?.items ?? []
   const isRemoving = deleteMutation.isPending || bulkDeleteMutation.isPending
@@ -274,6 +276,15 @@ export function TranscriptionPortal() {
             <JobDetail
               job={detailQuery.data}
               isLoading={detailQuery.isLoading}
+              isRenamingSpeaker={renameSpeakerMutation.isPending}
+              onRenameSpeaker={async (speakerId, displayName) => {
+                if (!selectedJobId) return
+                await renameSpeakerMutation.mutateAsync({
+                  jobId: selectedJobId,
+                  speakerId,
+                  displayName,
+                })
+              }}
               onRemove={() => {
                 const job = detailQuery.data ?? jobs.find((j) => j.id === selectedJobId)
                 if (!job) return

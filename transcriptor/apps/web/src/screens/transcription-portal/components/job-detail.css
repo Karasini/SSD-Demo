@@ -76,3 +76,77 @@ button.danger-text:hover {
   max-height: 60vh;
   overflow-y: auto;
 }
+
+.job-detail__speakers {
+  margin: 1rem 0;
+  padding: 1rem;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.job-detail__speakers h3 {
+  margin: 0 0 0.75rem 0;
+}
+
+.job-detail__speaker-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.job-detail__speaker-item {
+  display: grid;
+  grid-template-columns: 120px minmax(180px, 1fr) auto;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.job-detail__speaker-default {
+  color: #475569;
+  font-size: 0.9rem;
+}
+
+.job-detail__speaker-item input {
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 0.4rem 0.5rem;
+}
+
+.job-detail__rename-error {
+  color: #b91c1c;
+  margin: 0.75rem 0 0;
+}
+
+.job-detail__rename-success {
+  color: #166534;
+  margin: 0.75rem 0 0;
+}
+
+.job-detail__segments {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.job-detail__segment {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.75rem;
+}
+
+.job-detail__segment-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin-bottom: 0.25rem;
+}
+
+.job-detail__segment p {
+  margin: 0;
+  white-space: pre-wrap;
+}
