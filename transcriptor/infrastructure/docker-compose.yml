@@ -59,12 +59,12 @@ services:
       context: ../apps/transcriptor-worker
       dockerfile: Dockerfile
       args:
-        WHISPER_MODEL: medium
+        WHISPER_MODEL: base
         WHISPER_WARMUP_LANGUAGES: en,pl
     environment:
       API_BASE_URL: http://api:8080
       INTERNAL_API_KEY: dev-internal-key
-      WHISPER_MODEL: medium
+      WHISPER_MODEL: base
       WHISPER_DEVICE: cpu
       WHISPER_COMPUTE_TYPE: int8
       WHISPER_WARMUP_LANGUAGES: en,pl
